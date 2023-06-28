@@ -1,6 +1,6 @@
-﻿using BlastIMG.ImageLoaders;
+﻿using SharperImage.ImageLoaders;
 
-namespace BlastIMG;
+namespace SharperImage;
 
 public enum FileFormat
 {

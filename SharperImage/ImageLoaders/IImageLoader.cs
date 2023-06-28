@@ -1,4 +1,4 @@
-namespace BlastIMG.ImageLoaders;
+namespace SharperImage.ImageLoaders;
 
 public interface IImageLoader
 {

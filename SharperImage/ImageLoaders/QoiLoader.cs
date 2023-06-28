@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace BlastIMG.ImageLoaders;
+namespace SharperImage.ImageLoaders;
 
 class QoiHeader
 {

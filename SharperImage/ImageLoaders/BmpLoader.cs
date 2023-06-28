@@ -1,8 +1,6 @@
 using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
-namespace BlastIMG.ImageLoaders;
+namespace SharperImage.ImageLoaders;
 
 public enum CompressionMethod
 {

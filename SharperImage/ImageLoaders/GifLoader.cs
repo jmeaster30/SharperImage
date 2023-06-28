@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace BlastIMG.ImageLoaders;
+namespace SharperImage.ImageLoaders;
 
 public class GifColor
 {
