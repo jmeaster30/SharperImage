@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharperImage", "SharperImage\SharperImage.csproj", "{510B1622-D2D2-479F-A922-2F27B92A913A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{510B1622-D2D2-479F-A922-2F27B92A913A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{510B1622-D2D2-479F-A922-2F27B92A913A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{510B1622-D2D2-479F-A922-2F27B92A913A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{510B1622-D2D2-479F-A922-2F27B92A913A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
