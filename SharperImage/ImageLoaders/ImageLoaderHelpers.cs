@@ -1,7 +1,67 @@
+using System.Text;
+
 namespace BlastIMG.ImageLoaders;
 
 public static class ImageLoaderHelpers
 {
+    public static IEnumerable<T> PadLeft<T>(this IEnumerable<T> list, int amount, T value)
+    {
+        var result = new List<T>();
+        for (var i = 0; i < amount; i++)
+        {
+            if (i < list.Count())
+            {
+                result.Add(list.ElementAt(i));
+            }
+            else
+            {
+                result = result.Prepend(value).ToList();
+            }
+
+        }
+        return result;
+    }
+    
+    public static float Remap(this float value, float fromMin, float fromMax, float toMin, float toMax)
+    {
+        return (value - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
+    }
+    
+    public static float Remap(this int value, int fromMin, int fromMax, int toMin, int toMax)
+    {
+        return (float)(value - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
+    }
+    
+    public static int Floor(this float value)
+    {
+        return (int)Math.Floor(value);
+    }
+
+    public static int Ceiling(this double value)
+    {
+        return (int) Math.Ceiling(value);
+    }
+    
+    public static string ReadString(this Stream stream, int length)
+    {
+        var buffer = new byte[length];
+        var bytesRead = stream.Read(buffer, 0, length);
+        if (bytesRead != length) throw new IndexOutOfRangeException();
+        return Encoding.UTF8.GetString(buffer);
+    }
+
+    public static ushort ReadU16(this Stream stream, bool skipEndianCheck = false)
+    {
+        var buffer = new byte[2];
+        var bytesRead = stream.Read(buffer, 0, 2);
+        if (bytesRead != 2) throw new IndexOutOfRangeException();
+        if (BitConverter.IsLittleEndian && !skipEndianCheck)
+        {
+            buffer = buffer.Reverse().ToArray();
+        }
+        return BitConverter.ToUInt16(buffer);
+    }
+    
     public static byte[] ReadBytes(this Stream stream, long fileOffset, int count)
     {
         var buffer = new byte[count];
