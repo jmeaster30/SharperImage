@@ -8,10 +8,11 @@ public interface IImage
     uint Width();
     uint Height();
     Pixel[,] PixelArray();
-    void Load(Stream filename);
-    void Save(Stream filename);
+    Pixel GetPixel(uint x, uint y);
+    void Decode(Stream stream);
+    void Encode(Stream stream);
 
-    public static IImage Load(string imagePath, FileFormat format)
+    public static IImage Decode(string imagePath, FileFormat format)
     {
         using var imageFile = File.OpenRead(imagePath);
         return format switch

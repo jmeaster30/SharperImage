@@ -12,8 +12,9 @@ public class BitmapImage : IImage
     public uint Height() => _height;
     public uint Width() => _width;
     public Pixel[,] PixelArray() => _pixelData;
+    public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
     
-    public void Save(Stream stream)
+    public void Encode(Stream stream)
     {
         throw new NotImplementedException();
     }
@@ -21,11 +22,11 @@ public class BitmapImage : IImage
     public static BitmapImage LoadImage(Stream stream)
     {
         var bmp = new BitmapImage();
-        bmp.Load(stream);
+        bmp.Decode(stream);
         return bmp;
     }
 
-    public void Load(Stream stream)
+    public void Decode(Stream stream)
     {
         var fileHeader = stream.ReadBytes(0, 14);
         var parsedFileHeader = new BitmapFileHeader

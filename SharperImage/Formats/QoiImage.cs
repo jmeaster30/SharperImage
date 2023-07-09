@@ -1,9 +1,14 @@
 using System.Text;
+using Newtonsoft.Json;
+using SharperImage.Enumerators;
 
 namespace SharperImage.Formats;
 
 public class QoiImage : IImage
 {
+    // TODO add more parameters here so that we can control the output of the QOI image
+    // channels 3 rgb / 4 rgba 
+    // colorspace 0 srgb / 1 all channels linear
     private uint _height;
     private Pixel[,] _pixelData = { };
     private uint _width;
@@ -12,13 +17,126 @@ public class QoiImage : IImage
     public uint Height() => _height;
     public uint Width() => _width;
     public Pixel[,] PixelArray() => _pixelData;
+    public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
 
-    public void Save(Stream stream)
+    public void Encode(Stream stream)
     {
-        throw new NotImplementedException();
+        stream.WriteString("qoif");
+        stream.WriteU32(_width);
+        stream.WriteU32(_height);
+        stream.WriteByte(4); // TODO fix these
+        stream.WriteByte(0);
+
+        var pixels = this.ToRowRankPixelEnumerable();
+        // pixel map specified by qoi spec
+        var pixelHashMap = new Pixel[64];
+        var lastPixel = new Pixel(0, 0, 0, 0, 0, 255);
+        var run = 0;
+
+        foreach (var pixel in pixels)
+        {
+            if (pixel == lastPixel)
+            {
+                run += 1;
+                if (run == 62)
+                {
+                    stream.WriteByte(OpRun(run));
+                    run = 0;
+                }
+            }
+            else if (pixelHashMap[GetPixelHash(pixel)] == pixel)
+            {
+                stream.WriteByte(OpIndex(GetPixelHash(pixel)));
+            }
+            else
+            {
+                // output existing run
+                if (run > 0)
+                {
+                    stream.WriteByte(OpRun(run));
+                }
+                run = 0;
+
+                var redDiff = pixel.R - lastPixel.R;
+                var greenDiff = pixel.G - lastPixel.G;
+                var blueDiff = pixel.B - lastPixel.B;
+                var alphaDiff = pixel.A - lastPixel.A;
+                var drdg = redDiff - greenDiff;
+                var dbdg = blueDiff - greenDiff;
+
+                if (alphaDiff != 0)
+                {
+                    stream.Write(OpRgba(pixel.R, pixel.G, pixel.B, pixel.A));
+                }
+                else if (redDiff is <= 1 and >= -2
+                         && greenDiff is <= 1 and >= -2
+                         && blueDiff is <= 1 and >= -2)
+                {
+                    stream.WriteByte(OpDiff(redDiff, greenDiff, blueDiff));
+                }
+                else if (greenDiff is <= 31 and >= -32 
+                         && drdg is <= 7 and >= -8
+                         && dbdg is <= 7 and >= -8)
+                {
+                    stream.Write(OpLuma(greenDiff, drdg, dbdg));
+                }
+                else
+                {
+                    stream.Write(OpRgb(pixel.R, pixel.G, pixel.B));
+                }
+
+            }
+            
+            pixelHashMap[GetPixelHash(pixel)] = pixel;
+            lastPixel = pixel;
+        }
+
+        if (run != 0)
+        {
+            stream.WriteByte(OpRun(run));
+        }
+
+        stream.Write(new byte[] {0, 0, 0, 0, 0, 0, 0, 1});
     }
 
-    public void Load(Stream stream)
+    private static byte[] OpRgb(byte r, byte g, byte b)
+    {
+        return new byte[] { 254, r, g, b };
+    }
+
+    private static byte[] OpRgba(byte r, byte g, byte b, byte a)
+    {
+        return new byte[] { 255, r, g, b, a };
+    }
+
+    private static byte OpIndex(int index)
+    {
+        return (byte)(0b00111111 & index);
+    }
+
+    private static byte OpDiff(int dr, int dg, int db)
+    {
+        var fr = ((dr + 2) & 0b00000011) << 4;
+        var fg = ((dg + 2) & 0b00000011) << 2;
+        var fb = (db + 2) & 0b00000011;
+        return (byte)(0b01000000 | fr | fg | fb);
+    }
+
+    private static byte[] OpLuma(int dg, int drdg, int dbdg)
+    {
+        return new byte[]
+        {
+            (byte) (0b10000000 | (0b00111111 & (dg + 32))),
+            (byte) (((0b00001111 & (drdg + 8)) << 4) | (0b00001111 & (dbdg + 8)))
+        };
+    }
+
+    private static byte OpRun(int run)
+    {
+        return (byte)(0b11000000 | (0b00111111 & (run - 1)));
+    }
+
+    public void Decode(Stream stream)
     {
         var headerBytes = stream.ReadBytes(0, 14);
         var parsedHeader = new QoiHeader
@@ -29,6 +147,7 @@ public class QoiImage : IImage
             Channels = headerBytes[12],
             ColorSpace = headerBytes[13]
         };
+        Console.WriteLine(JsonConvert.SerializeObject(parsedHeader));
 
         _width = parsedHeader.Width;
         _height = parsedHeader.Height;
@@ -103,20 +222,22 @@ public class QoiImage : IImage
 
         //? Can we modify the above to make this not need the extra pixels array?
         for (var y = 0; y < parsedHeader.Height; y++)
-        for (var x = 0; x < parsedHeader.Width; x++)
         {
-            var pixelIndex = (int) (x + y * parsedHeader.Width);
-            var pixel = pixels[pixelIndex];
-            pixel.X = x;
-            pixel.Y = y;
-            _pixelData[x, y] = pixel;
+            for (var x = 0; x < parsedHeader.Width; x++)
+            {
+                var pixelIndex = (int) (x + y * parsedHeader.Width);
+                var pixel = pixels[pixelIndex];
+                pixel.X = x;
+                pixel.Y = y;
+                _pixelData[x, y] = pixel;
+            }
         }
     }
 
     public static QoiImage LoadImage(Stream stream)
     {
         var qoi = new QoiImage();
-        qoi.Load(stream);
+        qoi.Decode(stream);
         return qoi;
     }
 

@@ -2,32 +2,22 @@ namespace SharperImage.Formats;
 
 public class GifImage : IImage
 {
-    public FileFormat FileFormat()
-    {
-        return Formats.FileFormat.GIF;
-    }
+    private uint _width;
+    private uint _height;
+    private Pixel[,] _pixelData;
 
-    public uint Height()
-    {
-        throw new NotImplementedException();
-    }
+    public FileFormat FileFormat() => Formats.FileFormat.GIF;
+    public uint Height() => _height;
+    public uint Width() => _width;
+    public Pixel[,] PixelArray() => _pixelData;
+    public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
 
-    public uint Width()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Pixel[,] PixelArray()
+    public void Decode(Stream stream)
     {
         throw new NotImplementedException();
     }
 
-    public void Load(Stream stream)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Save(Stream stream)
+    public void Encode(Stream stream)
     {
         throw new NotImplementedException();
     }
@@ -35,7 +25,7 @@ public class GifImage : IImage
     public static GifImage LoadImage(Stream stream)
     {
         var gif = new GifImage();
-        gif.Load(stream);
+        gif.Decode(stream);
         return gif;
     }
 }

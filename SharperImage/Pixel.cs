@@ -30,4 +30,10 @@ public struct Pixel
         var y = (1 - bPrime - k) / (1 - k);
         return new[] {(byte) (c * 255), (byte) (m * 255), (byte) (y * 255), (byte) (k * 255)};
     }
+    
+    public override bool Equals(object? obj) => obj is Pixel other && this.Equals(other);
+    public bool Equals(Pixel p) => R == p.R && G == p.G && B == p.B && A == p.A;
+    public override int GetHashCode() => (X, Y).GetHashCode();
+    public static bool operator ==(Pixel lhs, Pixel rhs) => lhs.Equals(rhs);
+    public static bool operator !=(Pixel lhs, Pixel rhs) => !(lhs == rhs);
 }

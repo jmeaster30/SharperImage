@@ -35,6 +35,21 @@ public static class ImageLoaderHelpers
         return (int) Math.Ceiling(value);
     }
 
+    public static void WriteString(this Stream stream, string value)
+    {
+        stream.Write(Encoding.UTF8.GetBytes(value));
+    }
+    
+    public static void WriteU32(this Stream stream, uint value)
+    {
+        var bytes = BitConverter.GetBytes(value);
+        if (BitConverter.IsLittleEndian)
+        {
+            bytes = bytes.Reverse().ToArray();
+        }
+        stream.Write(bytes);
+    }
+
     public static string ReadString(this Stream stream, int length)
     {
         var buffer = new byte[length];
