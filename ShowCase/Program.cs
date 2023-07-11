@@ -19,14 +19,14 @@ var decoded2 = QoiImage.LoadImage(encodedStream1);
 
 Console.WriteLine("Decoded memory stream");
 
-var d1pixels = decoded1.ToEnumerable().ToList();
-var d2pixels = decoded2.ToEnumerable().ToList();
+var d1pixels = decoded1.ToRowRankPixelEnumerable();
+var d2pixels = decoded2.ToRowRankPixelEnumerable();
 
 Console.WriteLine("Got enumerables");
 
-var d1size = d1pixels.Count();
+var d1size = d1pixels.Count;
 Console.WriteLine($"D1 size {d1size}");
-var d2size = d2pixels.Count();
+var d2size = d2pixels.Count;
 Console.WriteLine($"D2 size {d2size}");
 
 if (d1size != d2size)
