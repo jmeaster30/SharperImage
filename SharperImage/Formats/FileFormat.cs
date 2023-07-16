@@ -6,5 +6,6 @@ public enum FileFormat
     PNG,
     JPEG,
     QOI,
-    GIF
+    GIF,
+    UNFORMATED
 }

@@ -13,6 +13,15 @@ public class BitmapImage : IImage
     public uint Width() => _width;
     public Pixel[,] PixelArray() => _pixelData;
     public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
+    public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
+
+    public BitmapImage() {}
+    public BitmapImage(uint width, uint height)
+    {
+        _width = width;
+        _height = height;
+        _pixelData = new Pixel[width, height];
+    }
     
     public void Encode(Stream stream)
     {
@@ -100,7 +109,7 @@ public class BitmapImage : IImage
             for (var i = 0; i < parsedDibHeader.ColorPalette; i++)
             {
                 var color = stream.ReadBytes(colorTableOffset + i * colorTableEntrySize, colorTableEntrySize);
-                colorTable[i] = new Pixel {R = color[0], G = color[1], B = color[2], A = color[3]};
+                colorTable[i] = new Pixel {Red = color[0], Green = color[1], Blue = color[2], Alpha = color[3]};
             }
         }
 
@@ -111,16 +120,16 @@ public class BitmapImage : IImage
 
         var rowSize = (int) Math.Ceiling(parsedDibHeader.BitsPerPixel * parsedDibHeader.BitmapWidth / 32.0) * 4;
 
-        for (var y = 0; y < Math.Abs(parsedDibHeader.BitmapHeight); y++)
+        for (uint y = 0; y < Math.Abs(parsedDibHeader.BitmapHeight); y++)
         {
             var rowBytes = stream.ReadBytes(parsedFileHeader.PixelArrayOffset + rowSize * y, rowSize);
-            var rowIndex = parsedDibHeader.BitmapHeight < 0 ? y : parsedDibHeader.BitmapHeight - y - 1;
-            for (var x = 0; x < parsedDibHeader.BitmapWidth; x++)
+            var rowIndex = parsedDibHeader.BitmapHeight < 0 ? y : (uint)(parsedDibHeader.BitmapHeight - y - 1);
+            for (uint x = 0; x < parsedDibHeader.BitmapWidth; x++)
                 _pixelData[x, rowIndex] = GetColor(rowBytes, x, rowIndex, parsedDibHeader, colorTable);
         }
     }
 
-    private static byte[] GetBytesByBPPIndex(byte[] rowBytes, int index, int bitsPerPixel)
+    private static byte[] GetBytesByBPPIndex(byte[] rowBytes, uint index, int bitsPerPixel)
     {
         var adjustedIndex = (int) Math.Floor(index * bitsPerPixel / 8.0);
         var width = (int) Math.Ceiling(bitsPerPixel / 8.0);
@@ -130,7 +139,7 @@ public class BitmapImage : IImage
         {
             var pixelsPerByte = 8 / bitsPerPixel;
             var subIndex = index % pixelsPerByte;
-            var shift = bitsPerPixel * (pixelsPerByte - subIndex - 1);
+            var shift = bitsPerPixel * (pixelsPerByte - (int)subIndex - 1);
             var mask = bitsPerPixel switch
             {
                 1 => 1, 2 => 3, 4 => 15, _ => throw new ArgumentException(nameof(bitsPerPixel))
@@ -157,16 +166,16 @@ public class BitmapImage : IImage
         return c;
     }
 
-    private static Pixel GetColor(byte[] rowBytes, int column, int row, BitmapInfoHeader header, Pixel[] colorTable)
+    private static Pixel GetColor(byte[] rowBytes, uint column, uint row, BitmapInfoHeader header, Pixel[] colorTable)
     {
         var pixelValue = BitConverter.ToInt32(GetBytesByBPPIndex(rowBytes, column, header.BitsPerPixel));
         if (header.CompressionMethod == CompressionMethod.BI_BITFIELDS)
             return new Pixel
             {
-                R = (byte) ((pixelValue & header.RedMask) >> GetShift(header.RedMask)),
-                G = (byte) ((pixelValue & header.GreenMask) >> GetShift(header.GreenMask)),
-                B = (byte) ((pixelValue & header.BlueMask) >> GetShift(header.BlueMask)),
-                A = (byte) ((pixelValue & header.AlphaMask) >> GetShift(header.AlphaMask)),
+                Red = (byte) ((pixelValue & header.RedMask) >> GetShift(header.RedMask)),
+                Green = (byte) ((pixelValue & header.GreenMask) >> GetShift(header.GreenMask)),
+                Blue = (byte) ((pixelValue & header.BlueMask) >> GetShift(header.BlueMask)),
+                Alpha = (byte) ((pixelValue & header.AlphaMask) >> GetShift(header.AlphaMask)),
                 X = column,
                 Y = row
             };
@@ -174,38 +183,38 @@ public class BitmapImage : IImage
         {
             <= 8 => new Pixel
             {
-                R = colorTable[pixelValue].R,
-                G = colorTable[pixelValue].G,
-                B = colorTable[pixelValue].B,
+                Red = colorTable[pixelValue].Red,
+                Green = colorTable[pixelValue].Green,
+                Blue = colorTable[pixelValue].Blue,
                 X = column,
                 Y = row
             },
             16 => new Pixel
             {
-                R = (byte) ((pixelValue >> 8) & 15).Remap(0, 15, 0, 255).Floor(),
-                G = (byte) ((pixelValue >> 4) & 15).Remap(0, 15, 0, 255).Floor(),
-                B = (byte) (pixelValue & 15).Remap(0, 15, 0, 255).Floor(),
-                A = (byte) ((pixelValue >> 12) & 15).Remap(0, 15, 0, 255).Floor(),
+                Red = (byte) ((pixelValue >> 8) & 15).Remap(0, 15, 0, 255).Floor(),
+                Green = (byte) ((pixelValue >> 4) & 15).Remap(0, 15, 0, 255).Floor(),
+                Blue = (byte) (pixelValue & 15).Remap(0, 15, 0, 255).Floor(),
+                Alpha = (byte) ((pixelValue >> 12) & 15).Remap(0, 15, 0, 255).Floor(),
                 X = column,
                 Y = row
             },
             24 => // 88800 RGBAX
                 new Pixel
                 {
-                    R = (byte) (pixelValue & 255),
-                    G = (byte) ((pixelValue >> 8) & 255),
-                    B = (byte) ((pixelValue >> 16) & 255),
-                    A = 255,
+                    Red = (byte) (pixelValue & 255),
+                    Green = (byte) ((pixelValue >> 8) & 255),
+                    Blue = (byte) ((pixelValue >> 16) & 255),
+                    Alpha = 255,
                     X = column,
                     Y = row
                 },
             32 => // 8888
                 new Pixel
                 {
-                    R = (byte) ((pixelValue >> 16) & 255),
-                    G = (byte) ((pixelValue >> 8) & 255),
-                    B = (byte) (pixelValue & 255),
-                    A = (byte) ((pixelValue >> 24) & 255),
+                    Red = (byte) ((pixelValue >> 16) & 255),
+                    Green = (byte) ((pixelValue >> 8) & 255),
+                    Blue = (byte) (pixelValue & 255),
+                    Alpha = (byte) ((pixelValue >> 24) & 255),
                     X = column,
                     Y = row
                 },

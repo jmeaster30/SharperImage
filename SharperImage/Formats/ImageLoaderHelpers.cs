@@ -66,6 +66,15 @@ public static class ImageLoaderHelpers
         if (BitConverter.IsLittleEndian && !skipEndianCheck) buffer = buffer.Reverse().ToArray();
         return BitConverter.ToUInt16(buffer);
     }
+    
+    public static uint ReadU32(this Stream stream, bool skipEndianCheck = false)
+    {
+        var buffer = new byte[4];
+        var bytesRead = stream.Read(buffer, 0, 4);
+        if (bytesRead != 4) throw new IndexOutOfRangeException();
+        if (BitConverter.IsLittleEndian && !skipEndianCheck) buffer = buffer.Reverse().ToArray();
+        return BitConverter.ToUInt32(buffer);
+    }
 
     public static byte[] ReadBytes(this Stream stream, long fileOffset, int count)
     {

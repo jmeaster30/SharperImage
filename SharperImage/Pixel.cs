@@ -2,28 +2,28 @@ namespace SharperImage;
 
 public struct Pixel
 {
-    public int X { get; set; }
-    public int Y { get; set; }
-    public byte R { get; set; }
-    public byte G { get; set; }
-    public byte B { get; set; }
-    public byte A { get; set; } = 255;
+    public uint X { get; set; }
+    public uint Y { get; set; }
+    public byte Red { get; set; }
+    public byte Green { get; set; }
+    public byte Blue { get; set; }
+    public byte Alpha { get; set; } = 255;
 
-    public Pixel(int x, int y, byte r, byte g, byte b, byte a)
+    public Pixel(uint x, uint y, byte red, byte green, byte blue, byte alpha)
     {
         X = x;
         Y = y;
-        R = r;
-        G = g;
-        B = b;
-        A = a;
+        Red = red;
+        Green = green;
+        Blue = blue;
+        Alpha = alpha;
     }
 
     public byte[] Cmyk()
     {
-        var rPrime = R / 255.0;
-        var gPrime = G / 255.0;
-        var bPrime = B / 255.0;
+        var rPrime = Red / 255.0;
+        var gPrime = Green / 255.0;
+        var bPrime = Blue / 255.0;
         var k = 1 - Math.Max(rPrime, Math.Max(gPrime, bPrime));
         var c = (1 - rPrime - k) / (1 - k);
         var m = (1 - gPrime - k) / (1 - k);
@@ -32,7 +32,7 @@ public struct Pixel
     }
     
     public override bool Equals(object? obj) => obj is Pixel other && this.Equals(other);
-    public bool Equals(Pixel p) => R == p.R && G == p.G && B == p.B && A == p.A;
+    public bool Equals(Pixel p) => Red == p.Red && Green == p.Green && Blue == p.Blue && Alpha == p.Alpha;
     public override int GetHashCode() => (X, Y).GetHashCode();
     public static bool operator ==(Pixel lhs, Pixel rhs) => lhs.Equals(rhs);
     public static bool operator !=(Pixel lhs, Pixel rhs) => !(lhs == rhs);

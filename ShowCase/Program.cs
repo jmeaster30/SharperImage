@@ -54,6 +54,6 @@ else
 {
     Console.WriteLine("THE IMAGES DO NOT MATCH");
     Console.WriteLine(match);
-    Console.WriteLine($"D1 R: {d1pixels[match].R} G: {d1pixels[match].G} B: {d1pixels[match].B} A: {d1pixels[match].A}");
-    Console.WriteLine($"D2 R: {d2pixels[match].R} G: {d2pixels[match].G} B: {d2pixels[match].B} A: {d2pixels[match].A}");
+    Console.WriteLine($"D1 R: {d1pixels[match].Red} G: {d1pixels[match].Green} B: {d1pixels[match].Blue} A: {d1pixels[match].Alpha}");
+    Console.WriteLine($"D2 R: {d2pixels[match].Red} G: {d2pixels[match].Green} B: {d2pixels[match].Blue} A: {d2pixels[match].Alpha}");
 }

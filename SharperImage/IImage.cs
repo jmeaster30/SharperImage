@@ -9,6 +9,7 @@ public interface IImage
     uint Height();
     Pixel[,] PixelArray();
     Pixel GetPixel(uint x, uint y);
+    void SetPixel(uint x, uint y, Pixel pixel);
     void Decode(Stream stream);
     void Encode(Stream stream);
 
