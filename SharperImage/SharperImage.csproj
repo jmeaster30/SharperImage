@@ -4,6 +4,17 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+        <Title>SharperImage</Title>
+        <Authors>John Easterday</Authors>
+        <Description>A cross-platform image encoding/decoding/processing library</Description>
+        <Copyright>2023</Copyright>
+        <PackageLicenseUrl>https://github.com/jmeaster30/SharperImage/blob/main/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/jmeaster30/SharperImage</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Version>1.0.0-alpha</Version>
+        <PackageId>Syrency.SharperImage</PackageId>
     </PropertyGroup>
 
     <ItemGroup>

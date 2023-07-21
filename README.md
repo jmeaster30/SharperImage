@@ -8,7 +8,15 @@ An image encoder/decoder/processor
    2. Kernel based filters
 3. Potentially leverage GPU processing (have this configurable)
 
-## Formats
+## Encoders
+- [ ] PNG
+- [ ] JPEG
+- [ ] BMP
+- [ ] GIF
+- [ ] QOI
+- [ ] HXA
+
+## Decoders
 - [ ] PNG
 - [ ] JPEG
 - [X] BMP
