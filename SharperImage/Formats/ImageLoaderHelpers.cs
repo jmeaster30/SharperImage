@@ -75,6 +75,24 @@ public static class ImageLoaderHelpers
         if (BitConverter.IsLittleEndian && !skipEndianCheck) buffer = buffer.Reverse().ToArray();
         return BitConverter.ToUInt32(buffer);
     }
+    
+    public static byte[] ReadBytes(this Stream stream, int count)
+    {
+        var buffer = new byte[count];
+        var bytesRead = stream.Read(buffer, 0, count);
+        if (bytesRead != count)
+            Console.Error.WriteLine("Didn't read the correct amount of bytes");
+        return buffer;
+    }
+    
+    public static byte[] ReadBytes(this Stream stream, uint count)
+    {
+        var buffer = new byte[count];
+        var bytesRead = stream.Read(buffer, 0, (int)count);
+        if (bytesRead != count)
+            Console.Error.WriteLine("Didn't read the correct amount of bytes");
+        return buffer;
+    }
 
     public static byte[] ReadBytes(this Stream stream, long fileOffset, int count)
     {

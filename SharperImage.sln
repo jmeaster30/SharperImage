@@ -4,6 +4,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharperImage", "SharperImag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShowCase", "ShowCase\ShowCase.csproj", "{9F32DEC4-150E-4EE5-BDC8-0CF394603FF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharperImage.Test", "SharperImage.Test\SharperImage.Test.csproj", "{3756E30C-50FA-4F3D-829C-46656F365C61}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharperImage.Viewer", "SharperImage.Viewer\SharperImage.Viewer.csproj", "{697B8334-4635-4131-A6C3-8B7779A9BD9C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{9F32DEC4-150E-4EE5-BDC8-0CF394603FF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9F32DEC4-150E-4EE5-BDC8-0CF394603FF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9F32DEC4-150E-4EE5-BDC8-0CF394603FF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3756E30C-50FA-4F3D-829C-46656F365C61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3756E30C-50FA-4F3D-829C-46656F365C61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3756E30C-50FA-4F3D-829C-46656F365C61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3756E30C-50FA-4F3D-829C-46656F365C61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{697B8334-4635-4131-A6C3-8B7779A9BD9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{697B8334-4635-4131-A6C3-8B7779A9BD9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{697B8334-4635-4131-A6C3-8B7779A9BD9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{697B8334-4635-4131-A6C3-8B7779A9BD9C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

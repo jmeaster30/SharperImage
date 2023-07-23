@@ -1,6 +1,7 @@
 using System.Text;
 using Newtonsoft.Json;
 using SharperImage.Enumerators;
+using SharperImage.Exceptions;
 
 namespace SharperImage.Formats;
 
@@ -156,16 +157,14 @@ public class QoiImage : IImage
             Channels = headerBytes[12],
             ColorSpace = headerBytes[13]
         };
-        Console.WriteLine(JsonConvert.SerializeObject(parsedHeader));
 
         _width = parsedHeader.Width;
         _height = parsedHeader.Height;
         _pixelData = new Pixel[parsedHeader.Width, parsedHeader.Height];
 
         if (parsedHeader.MagicNumber != "qoif")
-            throw new ArgumentException(
-                $"This stream is not a QOI image. Expected magic number 'qoif' but got '{parsedHeader.MagicNumber}'",
-                nameof(stream));
+            throw new ImageDecodeException(
+                $"This stream is not a QOI image. Expected magic number 'qoif' but got '{parsedHeader.MagicNumber}'");
 
         var pixels = new List<Pixel>();
         var index = new Pixel?[64];

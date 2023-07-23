@@ -21,6 +21,7 @@ public interface IImage
             Formats.FileFormat.BMP => BitmapImage.LoadImage(imageFile),
             Formats.FileFormat.QOI => QoiImage.LoadImage(imageFile),
             Formats.FileFormat.GIF => GifImage.LoadImage(imageFile),
+            Formats.FileFormat.PNG => PngImage.LoadImage(imageFile),
             _ => throw new NotImplementedException("Format not currently supported :(")
         };
     }

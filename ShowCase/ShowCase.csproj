@@ -8,7 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SharperImage\SharperImage.csproj"/>
+        <ProjectReference Include="..\SharperImage.Viewer\SharperImage.Viewer.csproj" />
+        <ProjectReference Include="..\SharperImage\SharperImage.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="images\png\" />
     </ItemGroup>
 
 </Project>

@@ -4,9 +4,16 @@ using Newtonsoft.Json;
 using SharperImage;
 using SharperImage.Enumerators;
 using SharperImage.Formats;
+using SharperImage.Viewer;
 
-using var imageFile = File.OpenRead("../../../images/qoi/testcard_rgba.qoi");
-var decoded1 = QoiImage.LoadImage(imageFile);
+//using var imageFile = File.OpenRead("../../../images/png/png_suite/basi0g01.png");
+using var imageFile = File.OpenRead("../../../images/qoi/kodim23.qoi");
+
+var image = QoiImage.LoadImage(imageFile);
+
+Viewer.Open(image);
+
+/*var decoded1 = QoiImage.LoadImage(imageFile);
 
 Console.WriteLine("Decoded base file");
 
@@ -56,4 +63,4 @@ else
     Console.WriteLine(match);
     Console.WriteLine($"D1 R: {d1pixels[match].Red} G: {d1pixels[match].Green} B: {d1pixels[match].Blue} A: {d1pixels[match].Alpha}");
     Console.WriteLine($"D2 R: {d2pixels[match].Red} G: {d2pixels[match].Green} B: {d2pixels[match].Blue} A: {d2pixels[match].Alpha}");
-}
+}*/

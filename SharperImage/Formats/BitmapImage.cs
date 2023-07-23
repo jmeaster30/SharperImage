@@ -44,6 +44,8 @@ public class BitmapImage : IImage
             FileSize = BitConverter.ToInt32(fileHeader[2..6]),
             PixelArrayOffset = BitConverter.ToInt32(fileHeader[10..14])
         };
+        
+        // TODO throw decode exception if the magic number is bunk
 
         var headerSize = BitConverter.ToInt32(stream.ReadBytes(14, 4));
         var dibHeader = stream.ReadBytes(14, headerSize);
@@ -125,7 +127,10 @@ public class BitmapImage : IImage
             var rowBytes = stream.ReadBytes(parsedFileHeader.PixelArrayOffset + rowSize * y, rowSize);
             var rowIndex = parsedDibHeader.BitmapHeight < 0 ? y : (uint)(parsedDibHeader.BitmapHeight - y - 1);
             for (uint x = 0; x < parsedDibHeader.BitmapWidth; x++)
+            {
                 _pixelData[x, rowIndex] = GetColor(rowBytes, x, rowIndex, parsedDibHeader, colorTable);
+            }
+                
         }
     }
 
@@ -175,7 +180,7 @@ public class BitmapImage : IImage
                 Red = (byte) ((pixelValue & header.RedMask) >> GetShift(header.RedMask)),
                 Green = (byte) ((pixelValue & header.GreenMask) >> GetShift(header.GreenMask)),
                 Blue = (byte) ((pixelValue & header.BlueMask) >> GetShift(header.BlueMask)),
-                Alpha = (byte) ((pixelValue & header.AlphaMask) >> GetShift(header.AlphaMask)),
+                Alpha = (byte)(header.AlphaMask == 0 ? 255 : (pixelValue & header.AlphaMask) >> GetShift(header.AlphaMask)),
                 X = column,
                 Y = row
             };
@@ -186,6 +191,7 @@ public class BitmapImage : IImage
                 Red = colorTable[pixelValue].Red,
                 Green = colorTable[pixelValue].Green,
                 Blue = colorTable[pixelValue].Blue,
+                Alpha = 255,
                 X = column,
                 Y = row
             },
