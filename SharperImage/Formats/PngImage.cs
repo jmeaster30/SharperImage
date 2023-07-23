@@ -29,16 +29,56 @@ public class PngImage : IImage
     public void Decode(Stream stream)
     {
         var signature = stream.ReadBytes(8);
-        Console.WriteLine(Convert.ToHexString(signature));
         if (!signature.SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }))
             throw new ImageDecodeException("Unexpected PNG file signature");
 
+        ImageHeader? imageHeader = null;
         var chunks = new List<Chunk>();
         while (stream.Position != stream.Length)
         {
-            chunks.Add(Chunk.Load(stream));
+            var chunk = Chunk.Load(stream);
+            switch (chunk.Type)
+            {
+                case "IHDR":
+                    imageHeader = chunk.ToImageHeader();
+                    break;
+                default: 
+                    Console.WriteLine($"Chunk {chunk.Type}");
+                    break;
+                    //throw new ArgumentException("Unexpected chunk type", nameof(chunk));
+            }
+            chunks.Add(chunk);
         }
 
+        if (imageHeader == null)
+        {
+            throw new ImageDecodeException("PNG image missing the critical IHDR chunk.");
+        }
+
+        var allowedBitDepths = imageHeader.ColorType switch
+        {
+            0 => new byte[] { 1, 2, 4, 6, 8, 16 },
+            2 => new byte[] { 8, 16 },
+            3 => new byte[] { 1, 2, 4, 8 },
+            4 => new byte[] { 8, 16 },
+            6 => new byte[] { 8, 16 },
+            _ => throw new ImageDecodeException("Unexpected color type :("),
+        };
+
+        if (!allowedBitDepths.Contains(imageHeader.BitDepth))
+        {
+            throw new ImageDecodeException("Unexpected bit depth :(");
+        }
+
+        if (imageHeader.CompressionMethod != 0)
+        {
+            throw new ImageDecodeException("Unexpected compression method :(");
+        }
+        
+        _width = imageHeader.Width;
+        _height = imageHeader.Height;
+
+        Console.WriteLine(JsonConvert.SerializeObject(imageHeader));
         Console.WriteLine(JsonConvert.SerializeObject(chunks));
     }
     
@@ -60,6 +100,31 @@ public class PngImage : IImage
                 Crc = stream.ReadU32(),
             };
         }
+
+        public ImageHeader ToImageHeader()
+        {
+            return new ImageHeader
+            {
+                Width = Data[..4].ToU32(),
+                Height = Data[4..8].ToU32(),
+                BitDepth = Data[8],
+                ColorType = Data[9],
+                CompressionMethod = Data[10],
+                FilterMethod = Data[11],
+                InterlaceMethod = Data[12],
+            };
+        }
+    }
+
+    private class ImageHeader
+    {
+        public uint Width { get; set; }
+        public uint Height { get; set; }
+        public byte BitDepth { get; set; }
+        public byte ColorType { get; set; }
+        public byte CompressionMethod { get; set; }
+        public byte FilterMethod { get; set; }
+        public byte InterlaceMethod { get; set; }
     }
 
     public void Encode(Stream stream)
