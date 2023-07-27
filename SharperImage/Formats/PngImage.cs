@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using SharperImage.Exceptions;
@@ -33,12 +34,12 @@ public class PngImage : IImage
             throw new ImageDecodeException("Unexpected PNG file signature");
 
         var chunks = new List<Chunk>();
+        ImageHeader? imageHeader = null;
         while (stream.Position != stream.Length)
         {
-            chunks.Add(Chunk.Load(stream));
+            chunks.Add(Chunk.Load(stream, imageHeader));
+            imageHeader = (ImageHeader?)chunks.SingleOrDefault(x => x.Is<ImageHeader>());
         }
-        
-        var imageHeader = (ImageHeader?)chunks.SingleOrDefault(x => x.Is<ImageHeader>());
 
         if (imageHeader == null)
         {
@@ -90,7 +91,7 @@ public class PngImage : IImage
 
         public abstract bool Is<T>();
 
-        public static Chunk Load(Stream stream)
+        public static Chunk Load(Stream stream, ImageHeader? imageHeader)
         {
             var chunkLength = stream.ReadU32();
             var type = Encoding.UTF8.GetString(stream.ReadBytes(4));
@@ -122,6 +123,7 @@ public class PngImage : IImage
                     Crc = crc,
                     Value = data[..4].ToU32(),
                 },
+                "sBIT" => SignificantBits.Load(chunkLength, type, data, crc, imageHeader),
                 _ => new Unknown
                 {
                     Length = chunkLength,
@@ -184,6 +186,86 @@ public class PngImage : IImage
         public override bool Is<T>()
         {
             return typeof(T) == typeof(Gamma);
+        }
+    }
+
+    private class SignificantBits : Chunk
+    {
+        public byte RedScale { get; set; }
+        public byte GreenScale { get; set; }
+        public byte BlueScale { get; set; }
+        public byte AlphaScale { get; set; }
+
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(SignificantBits);
+        }
+
+        public static SignificantBits Load(uint length, string type, byte[] data, uint crc, ImageHeader? header)
+        {
+            if (header == null)
+            {
+                throw new ImageDecodeException(
+                    "Found an sBIT chunk without having an IHDR chunk. The structure of the sBIT chunk is defined with the color type of the IHDR chunk");
+            }
+
+            return header.ColorType switch
+            {
+                0 =>
+                    new SignificantBits
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        RedScale = data[0],
+                        GreenScale = data[0],
+                        BlueScale = data[0],
+                        AlphaScale = data[0],
+                    },
+                2 or 3 => new SignificantBits
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        RedScale = data[0],
+                        GreenScale = data[1],
+                        BlueScale = data[2],
+                        AlphaScale = 0,
+                    },
+                4 => new SignificantBits
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        RedScale = data[0],
+                        GreenScale = data[0],
+                        BlueScale = data[0],
+                        AlphaScale = data[1],
+                    },
+                6 => new SignificantBits
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        RedScale = data[0],
+                        GreenScale = data[1],
+                        BlueScale = data[2],
+                        AlphaScale = data[3],
+                    },
+                _ => throw new ImageDecodeException("Unexpected color type for the sBIT header")
+            };
+        }
+    }
+
+    private class ImageData : Chunk
+    {
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(ImageData);
         }
     }
 
