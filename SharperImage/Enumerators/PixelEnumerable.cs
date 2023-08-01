@@ -4,10 +4,10 @@ namespace SharperImage.Enumerators;
 
 public class PixelEnumerable<T> : IReadOnlyList<Pixel> where T : IEnumerator<Pixel>
 {
-    private IImage _image;
-    private Func<IImage, int, T> _constructor;
+    private Image _image;
+    private Func<Image, int, T> _constructor;
 
-    public PixelEnumerable(IImage image, Func<IImage, int, T> constructor)
+    public PixelEnumerable(Image image, Func<Image, int, T> constructor)
     {
         _image = image;
         _constructor = constructor;
@@ -23,7 +23,7 @@ public class PixelEnumerable<T> : IReadOnlyList<Pixel> where T : IEnumerator<Pix
         return GetEnumerator();
     }
 
-    public int Count => (int)_image.Width() * (int)_image.Height();
+    public int Count => (int)_image.Width * (int)_image.Height;
 
     public Pixel this[int index] {
         get

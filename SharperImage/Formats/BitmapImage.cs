@@ -1,42 +1,16 @@
 using System.Text;
+using SharperImage.Formats.Interfaces;
 
 namespace SharperImage.Formats;
 
-public class BitmapImage : IImage
+public class BitmapImage : IFormat
 {
-    private uint _width;
-    private uint _height;
-    private Pixel[,] _pixelData = {};
-
-    public FileFormat FileFormat() => Formats.FileFormat.BMP;
-    public uint Height() => _height;
-    public uint Width() => _width;
-    public Pixel[,] PixelArray() => _pixelData;
-    public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
-    public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
-
-    public BitmapImage() {}
-    public BitmapImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
-    public BitmapImage(uint width, uint height, Pixel[,] pixelArray)
-    {
-        _width = width;
-        _height = height;
-        _pixelData = pixelArray;
-    }
-    
-    public void Encode(Stream stream)
+    public void Encode(Image image, Stream stream)
     {
         throw new NotImplementedException();
     }
 
-    public static BitmapImage LoadImage(Stream stream)
-    {
-        var bmp = new BitmapImage();
-        bmp.Decode(stream);
-        return bmp;
-    }
-
-    public void Decode(Stream stream)
+    public Image Decode(Stream stream)
     {
         var fileHeader = stream.ReadBytes(0, 14);
         var parsedFileHeader = new BitmapFileHeader
@@ -118,9 +92,9 @@ public class BitmapImage : IImage
         }
 
 
-        _width = (uint) parsedDibHeader.BitmapWidth;
-        _height = (uint) Math.Abs(parsedDibHeader.BitmapHeight);
-        _pixelData = new Pixel[parsedDibHeader.BitmapWidth, Math.Abs(parsedDibHeader.BitmapHeight)];
+        var width = (uint) parsedDibHeader.BitmapWidth;
+        var height = (uint) Math.Abs(parsedDibHeader.BitmapHeight);
+        var pixelData = new Pixel[parsedDibHeader.BitmapWidth, Math.Abs(parsedDibHeader.BitmapHeight)];
 
         var rowSize = (int) Math.Ceiling(parsedDibHeader.BitsPerPixel * parsedDibHeader.BitmapWidth / 32.0) * 4;
 
@@ -130,10 +104,11 @@ public class BitmapImage : IImage
             var rowIndex = parsedDibHeader.BitmapHeight < 0 ? y : (uint)(parsedDibHeader.BitmapHeight - y - 1);
             for (uint x = 0; x < parsedDibHeader.BitmapWidth; x++)
             {
-                _pixelData[x, rowIndex] = GetColor(rowBytes, x, rowIndex, parsedDibHeader, colorTable);
+                pixelData[x, rowIndex] = GetColor(rowBytes, x, rowIndex, parsedDibHeader, colorTable);
             }
-                
         }
+
+        return new Image(width, height, pixelData);
     }
 
     private static byte[] GetBytesByBPPIndex(byte[] rowBytes, uint index, int bitsPerPixel)

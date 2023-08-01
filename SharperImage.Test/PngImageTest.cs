@@ -28,11 +28,11 @@ public class PngImageTest
     public void TestValidFiles(string filename, uint width, uint height)
     {
         var imageFile = File.OpenRead(filename);
-        var pngImage = new PngImage();
-        pngImage.Decode(imageFile);
+        var pngFormatter = new PngImage();
+        var image = pngFormatter.Decode(imageFile);
         
-        Assert.Equal(pngImage.Width(), width);
-        Assert.Equal(pngImage.Height(), height);
+        Assert.Equal(image.Width, width);
+        Assert.Equal(image.Height, height);
         
         // TODO compare the pixels???
     }

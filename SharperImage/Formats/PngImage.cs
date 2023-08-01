@@ -1,41 +1,13 @@
 using System.Text;
 using Newtonsoft.Json;
 using SharperImage.Exceptions;
+using SharperImage.Formats.Interfaces;
 
 namespace SharperImage.Formats;
 
-public class PngImage : IImage
+public class PngImage : IFormat
 {
-    private uint _width;
-    private uint _height;
-    private Pixel[,] _pixelData  = {};
-
-    public FileFormat FileFormat() => Formats.FileFormat.PNG;
-
-    public uint Width() => _width;
-    public uint Height() => _height;
-
-    public Pixel[,] PixelArray() => _pixelData;
-    public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
-    public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
-    
-    public PngImage() {}
-    public PngImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
-    public PngImage(uint width, uint height, Pixel[,] pixelArray)
-    {
-        _width = width;
-        _height = height;
-        _pixelData = pixelArray;
-    }
-
-    public static PngImage LoadImage(Stream stream)
-    {
-        var png = new PngImage();
-        png.Decode(stream);
-        return png;
-    }
-
-    public void Decode(Stream stream)
+    public Image Decode(Stream stream)
     {
         var signature = stream.ReadBytes(8);
         if (!signature.SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }))
@@ -83,11 +55,12 @@ public class PngImage : IImage
                     "Expected no palette chunks is the color type 0 or 4 but found a palette chunk");
         }
 
-        _width = imageHeader.Width;
-        _height = imageHeader.Height;
+        var width = imageHeader.Width;
+        var height = imageHeader.Height;
 
         Console.WriteLine(JsonConvert.SerializeObject(imageHeader));
         Console.WriteLine(JsonConvert.SerializeObject(chunks));
+        return new Image(width, height);
     }
     
     private abstract class Chunk
@@ -285,7 +258,7 @@ public class PngImage : IImage
         }
     }
     
-    public void Encode(Stream stream)
+    public void Encode(Image image, Stream stream)
     {
         throw new NotImplementedException();
     }

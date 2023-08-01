@@ -19,7 +19,7 @@ public static class GrayscaleFilter
         return pixel.Process(Grayscale);
     }
 
-    public static IImage Grayscale(this IImage image)
+    public static Image Grayscale(this Image image)
     {
         return image.Process(Grayscale);
     }

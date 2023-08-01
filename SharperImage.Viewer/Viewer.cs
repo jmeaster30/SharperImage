@@ -19,7 +19,7 @@ public class Viewer
         Application.Run();
     }
     
-    public static void Open(IImage image)
+    public static void Open(Image image)
     {
         Application.Init();
 

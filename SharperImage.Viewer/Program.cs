@@ -15,7 +15,7 @@ namespace SharperImage.Viewer
                 "png" => FileFormat.PNG,
                 "bmp" => FileFormat.BMP,
                 "qoi" => FileFormat.QOI,
-                "unformatted" => FileFormat.UNFORMATED,
+                "unformatted" => FileFormat.UNFORMATTED,
                 "gif" => FileFormat.GIF,
                 _ => throw new NotImplementedException(),
             };

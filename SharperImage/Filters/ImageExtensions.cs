@@ -10,14 +10,14 @@ public static class ImageExtensions
         return pixel;
     }
 
-    public static IImage Process(this IImage image, Func<Pixel, Pixel> pixelFilter)
+    public static Image Process(this Image image, Func<Pixel, Pixel> pixelFilter)
     {
-        var final = new Pixel[image.Width(), image.Height()];
+        var final = new Pixel[image.Width, image.Height];
         foreach (var pixel in image.ToRowRankPixelEnumerable().Select(pixelFilter))
         {
             final[pixel.X, pixel.Y] = pixel;
         }
 
-        return IImage.Create(image.FileFormat(), image.Width(), image.Height(), final);
+        return new Image(image.Width, image.Height, final);
     }
 }

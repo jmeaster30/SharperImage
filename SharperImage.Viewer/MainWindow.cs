@@ -11,20 +11,20 @@ namespace SharperImage.Viewer
     {
         private ImageArea _imageArea;
         
-        public MainWindow(string filename, FileFormat format) : this(IImage.Decode(filename, format)) { }
-        public MainWindow(IImage image)  : base("SharperImage.Viewer")
+        public MainWindow(string filename, FileFormat format) : this(Image.Decode(filename, format)) { }
+        public MainWindow(Image image)  : base("SharperImage.Viewer")
         {
             DeleteEvent += delegate { Application.Quit(); };
             SetDefaultSize(800, 600);
             
-            Console.WriteLine($"Image {image.Width()} x {image.Height()}");
+            Console.WriteLine($"Image {image.Width} x {image.Height}");
 
             _imageArea = new ImageArea(image);
             
             var swin = new ScrolledWindow();
             swin.Add(_imageArea);
             
-            var label = new Label($"Width: {image.Width()} Height {image.Height()}");
+            var label = new Label($"Width: {image.Width} Height {image.Height}");
 
             var hbox = new HBox(false, 0);
             hbox.Add(label);
@@ -75,11 +75,11 @@ namespace SharperImage.Viewer
 
         private class ImageArea : DrawingArea
         {
-            private IImage _image;
+            private Image _image;
 
             private Color _background = new Color { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
             
-            public ImageArea(IImage image)
+            public ImageArea(Image image)
             {
                 _image = image;
             }

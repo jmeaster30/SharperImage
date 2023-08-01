@@ -18,7 +18,7 @@ public static class InvertFilter
         return pixel.Process(Invert);
     }
 
-    public static IImage Invert(this IImage image)
+    public static Image Invert(this Image image)
     {
         return image.Process(Invert);
     }

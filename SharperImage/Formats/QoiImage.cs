@@ -2,43 +2,24 @@ using System.Text;
 using Newtonsoft.Json;
 using SharperImage.Enumerators;
 using SharperImage.Exceptions;
+using SharperImage.Formats.Interfaces;
 
 namespace SharperImage.Formats;
 
-public class QoiImage : IImage
+public class QoiImage : IFormat
 {
     // TODO add more parameters here so that we can control the output of the QOI image
     // channels 3 rgb / 4 rgba 
     // colorspace 0 srgb / 1 all channels linear
-    private uint _height;
-    private Pixel[,] _pixelData = { };
-    private uint _width;
-
-    public FileFormat FileFormat() => Formats.FileFormat.QOI;
-    public uint Height() => _height;
-    public uint Width() => _width;
-    public Pixel[,] PixelArray() => _pixelData;
-    public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
-    public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
-    
-    public QoiImage() {}
-    public QoiImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
-    public QoiImage(uint width, uint height, Pixel[,] pixelArray)
-    {
-        _width = width;
-        _height = height;
-        _pixelData = pixelArray;
-    }
-
-    public void Encode(Stream stream)
+    public void Encode(Image image, Stream stream)
     {
         stream.WriteString("qoif");
-        stream.WriteU32(_width);
-        stream.WriteU32(_height);
+        stream.WriteU32(image.Width);
+        stream.WriteU32(image.Height);
         stream.WriteByte(4); // TODO fix these
         stream.WriteByte(0);
 
-        var pixels = this.ToRowRankPixelEnumerable();
+        var pixels = image.ToRowRankPixelEnumerable();
         // pixel map specified by qoi spec
         var pixelHashMap = new Pixel[64];
         var lastPixel = new Pixel(0, 0, Color.Black);
@@ -147,7 +128,7 @@ public class QoiImage : IImage
         return (byte)(0b11000000 | (0b00111111 & (run - 1)));
     }
 
-    public void Decode(Stream stream)
+    public Image Decode(Stream stream)
     {
         var headerBytes = stream.ReadBytes(0, 14);
         var parsedHeader = new QoiHeader
@@ -159,9 +140,9 @@ public class QoiImage : IImage
             ColorSpace = headerBytes[13]
         };
 
-        _width = parsedHeader.Width;
-        _height = parsedHeader.Height;
-        _pixelData = new Pixel[parsedHeader.Width, parsedHeader.Height];
+        var width = parsedHeader.Width;
+        var height = parsedHeader.Height;
+        var pixelData = new Pixel[parsedHeader.Width, parsedHeader.Height];
 
         if (parsedHeader.MagicNumber != "qoif")
             throw new ImageDecodeException(
@@ -238,16 +219,11 @@ public class QoiImage : IImage
                 var pixel = pixels[pixelIndex];
                 pixel.X = x;
                 pixel.Y = y;
-                _pixelData[x, y] = pixel;
+                pixelData[x, y] = pixel;
             }
         }
-    }
 
-    public static QoiImage LoadImage(Stream stream)
-    {
-        var qoi = new QoiImage();
-        qoi.Decode(stream);
-        return qoi;
+        return new Image(width, height, pixelData);
     }
 
     private static int GetPixelHash(Pixel pixel)
