@@ -14,11 +14,12 @@ public class GifImage : IImage
     public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
     
     public GifImage() {}
-    public GifImage(uint width, uint height)
+    public GifImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
+    public GifImage(uint width, uint height, Pixel[,] pixelArray)
     {
         _width = width;
         _height = height;
-        _pixelData = new Pixel[width, height];
+        _pixelData = pixelArray;
     }
 
     public void Decode(Stream stream)

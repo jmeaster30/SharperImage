@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using Cairo;
-using GLib;
 using Gtk;
 using SharperImage.Enumerators;
 using SharperImage.Formats;
@@ -79,7 +77,7 @@ namespace SharperImage.Viewer
         {
             private IImage _image;
 
-            private Pixel _background = new Pixel { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
+            private Color _background = new Color { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
             
             public ImageArea(IImage image)
             {
@@ -100,10 +98,10 @@ namespace SharperImage.Viewer
                 // TODO reduce calls to this function
                 foreach (var pixel in _image.ToRowRankPixelEnumerable())
                 {
-                    var alpha = pixel.Alpha + (_background.Alpha * (255 - pixel.Alpha) / 255);
-                    var red = (pixel.Red * pixel.Alpha + _background.Red * _background.Alpha * (255 - pixel.Alpha) / 255) / alpha;
-                    var green = (pixel.Green * pixel.Alpha + _background.Green * _background.Alpha * (255 - pixel.Alpha) / 255) / alpha;
-                    var blue = (pixel.Blue * pixel.Alpha + _background.Blue * _background.Alpha * (255 - pixel.Alpha) / 255) / alpha;
+                    var alpha = pixel.Color.Alpha + (_background.Alpha * (255 - pixel.Color.Alpha) / 255);
+                    var red = (pixel.Color.Red * pixel.Color.Alpha + _background.Red * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
+                    var green = (pixel.Color.Green * pixel.Color.Alpha + _background.Green * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
+                    var blue = (pixel.Color.Blue * pixel.Color.Alpha + _background.Blue * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
                     
                     c.SetSourceRGBA(red / 255.0, green / 255.0, blue / 255.0, alpha / 255.0);
                     c.Rectangle(pixel.X, pixel.Y, 1, 1);

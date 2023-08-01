@@ -38,10 +38,13 @@ public class UnformattedImage : IImage
             var y = index / _width;
             var pixel = new Pixel
             {
-                Red = (byte) stream.ReadByte(),
-                Green = (byte) stream.ReadByte(),
-                Blue = (byte) stream.ReadByte(),
-                Alpha = (byte) stream.ReadByte(),
+                Color = new Color
+                {
+                    Red = (byte) stream.ReadByte(),
+                    Green = (byte) stream.ReadByte(),
+                    Blue = (byte) stream.ReadByte(),
+                    Alpha = (byte) stream.ReadByte(),
+                },
                 X = x,
                 Y = y
             };
@@ -59,10 +62,10 @@ public class UnformattedImage : IImage
         var pixels = this.ToRowRankPixelEnumerable();
         foreach (var pix in pixels)
         {
-            stream.WriteByte(pix.Red);
-            stream.WriteByte(pix.Green);
-            stream.WriteByte(pix.Blue);
-            stream.WriteByte(pix.Alpha);
+            stream.WriteByte(pix.Color.Red);
+            stream.WriteByte(pix.Color.Green);
+            stream.WriteByte(pix.Color.Blue);
+            stream.WriteByte(pix.Color.Alpha);
         }
     }
 }

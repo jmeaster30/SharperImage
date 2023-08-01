@@ -22,11 +22,12 @@ public class QoiImage : IImage
     public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
     
     public QoiImage() {}
-    public QoiImage(uint width, uint height)
+    public QoiImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
+    public QoiImage(uint width, uint height, Pixel[,] pixelArray)
     {
         _width = width;
         _height = height;
-        _pixelData = new Pixel[width, height];
+        _pixelData = pixelArray;
     }
 
     public void Encode(Stream stream)
@@ -40,7 +41,7 @@ public class QoiImage : IImage
         var pixels = this.ToRowRankPixelEnumerable();
         // pixel map specified by qoi spec
         var pixelHashMap = new Pixel[64];
-        var lastPixel = new Pixel(0, 0, 0, 0, 0, 255);
+        var lastPixel = new Pixel(0, 0, Color.Black);
         var run = 0;
 
         foreach (var pixel in pixels)
@@ -67,16 +68,16 @@ public class QoiImage : IImage
                 }
                 run = 0;
 
-                var redDiff = pixel.Red - lastPixel.Red;
-                var greenDiff = pixel.Green - lastPixel.Green;
-                var blueDiff = pixel.Blue - lastPixel.Blue;
-                var alphaDiff = pixel.Alpha - lastPixel.Alpha;
+                var redDiff = pixel.Color.Red - lastPixel.Color.Red;
+                var greenDiff = pixel.Color.Green - lastPixel.Color.Green;
+                var blueDiff = pixel.Color.Blue - lastPixel.Color.Blue;
+                var alphaDiff = pixel.Color.Alpha - lastPixel.Color.Alpha;
                 var drdg = redDiff - greenDiff;
                 var dbdg = blueDiff - greenDiff;
 
                 if (alphaDiff != 0)
                 {
-                    stream.Write(OpRgba(pixel.Red, pixel.Green, pixel.Blue, pixel.Alpha));
+                    stream.Write(OpRgba(pixel.Color.Red, pixel.Color.Green, pixel.Color.Blue, pixel.Color.Alpha));
                 }
                 else if (redDiff is <= 1 and >= -2
                          && greenDiff is <= 1 and >= -2
@@ -92,7 +93,7 @@ public class QoiImage : IImage
                 }
                 else
                 {
-                    stream.Write(OpRgb(pixel.Red, pixel.Green, pixel.Blue));
+                    stream.Write(OpRgb(pixel.Color.Red, pixel.Color.Green, pixel.Color.Blue));
                 }
 
             }
@@ -174,13 +175,13 @@ public class QoiImage : IImage
         while (fileOffset < fileLength)
         {
             var tag = stream.ReadByte(fileOffset);
-            var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, 0, 0, 0, 255));
+            var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, Color.Black));
             if (tag == 254) // QOI_OP_RGB
             {
                 var r = stream.ReadByte(fileOffset + 1);
                 var g = stream.ReadByte(fileOffset + 2);
                 var b = stream.ReadByte(fileOffset + 3);
-                pixels.Add(new Pixel {Red = r, Green = g, Blue = b, Alpha = lastPixel.Alpha});
+                pixels.Add(new Pixel {Color = new Color { Red = r, Green = g, Blue = b, Alpha = lastPixel.Color.Alpha }});
                 fileOffset += 4;
             }
             else if (tag == 255) // QOI_OP_RGBA
@@ -189,20 +190,20 @@ public class QoiImage : IImage
                 var g = stream.ReadByte(fileOffset + 2);
                 var b = stream.ReadByte(fileOffset + 3);
                 var a = stream.ReadByte(fileOffset + 4);
-                pixels.Add(new Pixel {Red = r, Green = g, Blue = b, Alpha = a});
+                pixels.Add(new Pixel {Color = new Color { Red = r, Green = g, Blue = b, Alpha = a }});
                 fileOffset += 5;
             }
             else if ((tag & 192) == 0) // QOI_OP_INDEX
             {
-                pixels.Add(index[tag] ?? new Pixel(0, 0, 0, 0, 0, 0));
+                pixels.Add(index[tag] ?? new Pixel(0, 0, Color.Black));
                 fileOffset += 1;
             }
             else if ((tag & 192) == 64) // QOI_OP_DIFF
             {
-                var nr = lastPixel.Red.ByteSum(((tag >> 4) & 3) - 2);
-                var ng = lastPixel.Green.ByteSum(((tag >> 2) & 3) - 2);
-                var nb = lastPixel.Blue.ByteSum((tag & 3) - 2);
-                pixels.Add(new Pixel {Red = nr, Green = ng, Blue = nb, Alpha = lastPixel.Alpha});
+                var nr = lastPixel.Color.Red.ByteSum(((tag >> 4) & 3) - 2);
+                var ng = lastPixel.Color.Green.ByteSum(((tag >> 2) & 3) - 2);
+                var nb = lastPixel.Color.Blue.ByteSum((tag & 3) - 2);
+                pixels.Add(new Pixel {Color = new Color { Red = nr, Green = ng, Blue = nb, Alpha = lastPixel.Color.Alpha }});
                 fileOffset += 1;
             }
             else if ((tag & 192) == 128) // QOI_OP_LUMA
@@ -211,10 +212,10 @@ public class QoiImage : IImage
                 var diffGreen = (tag & 63) - 32;
                 var drdg = ((nextByte >> 4) & 15) - 8;
                 var dbdg = (nextByte & 15) - 8;
-                var nr = lastPixel.Red.ByteSum(diffGreen + drdg);
-                var ng = lastPixel.Green.ByteSum(diffGreen);
-                var nb = lastPixel.Blue.ByteSum(diffGreen + dbdg);
-                pixels.Add(new Pixel {Red = nr, Green = ng, Blue = nb, Alpha = lastPixel.Alpha});
+                var nr = lastPixel.Color.Red.ByteSum(diffGreen + drdg);
+                var ng = lastPixel.Color.Green.ByteSum(diffGreen);
+                var nb = lastPixel.Color.Blue.ByteSum(diffGreen + dbdg);
+                pixels.Add(new Pixel {Color = new Color {Red = nr, Green = ng, Blue = nb, Alpha = lastPixel.Color.Alpha}});
                 fileOffset += 2;
             }
             else if ((tag & 192) == 192) // QOI_OP_RUN
@@ -224,7 +225,7 @@ public class QoiImage : IImage
                 fileOffset += 1;
             }
 
-            var toIndex = pixels.LastOrDefault(new Pixel(0, 0, 0, 0, 0, 255));
+            var toIndex = pixels.LastOrDefault(new Pixel(0, 0, Color.Black));
             index[GetPixelHash(toIndex)] = toIndex;
         }
 
@@ -251,7 +252,7 @@ public class QoiImage : IImage
 
     private static int GetPixelHash(Pixel pixel)
     {
-        return (pixel.Red * 3 + pixel.Green * 5 + pixel.Blue * 7 + pixel.Alpha * 11) % 64;
+        return (pixel.Color.Red * 3 + pixel.Color.Green * 5 + pixel.Color.Blue * 7 + pixel.Color.Alpha * 11) % 64;
     }
 
     private static IEnumerable<Pixel> MakeCopies(Pixel pixel, int count)

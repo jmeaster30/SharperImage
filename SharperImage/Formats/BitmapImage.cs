@@ -16,11 +16,12 @@ public class BitmapImage : IImage
     public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
 
     public BitmapImage() {}
-    public BitmapImage(uint width, uint height)
+    public BitmapImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
+    public BitmapImage(uint width, uint height, Pixel[,] pixelArray)
     {
         _width = width;
         _height = height;
-        _pixelData = new Pixel[width, height];
+        _pixelData = pixelArray;
     }
     
     public void Encode(Stream stream)
@@ -107,11 +108,12 @@ public class BitmapImage : IImage
         var colorTable = new Pixel[parsedDibHeader.ColorPalette];
         var colorTableOffset = 14 + parsedDibHeader.HeaderSize;
         var colorTableEntrySize = 4; // TODO handle other sized color table entries. For now assume RGBA32 8888
-        if (parsedDibHeader.BitsPerPixel <= 8){ 
+        if (parsedDibHeader.BitsPerPixel <= 8){
             for (var i = 0; i < parsedDibHeader.ColorPalette; i++)
             {
                 var color = stream.ReadBytes(colorTableOffset + i * colorTableEntrySize, colorTableEntrySize);
-                colorTable[i] = new Pixel {Red = color[0], Green = color[1], Blue = color[2], Alpha = color[3]};
+                colorTable[i] = new Pixel
+                    { Color = new Color { Red = color[0], Green = color[1], Blue = color[2], Alpha = color[3] }};
             }
         }
 
@@ -177,10 +179,13 @@ public class BitmapImage : IImage
         if (header.CompressionMethod == CompressionMethod.BI_BITFIELDS)
             return new Pixel
             {
-                Red = (byte) ((pixelValue & header.RedMask) >> GetShift(header.RedMask)),
-                Green = (byte) ((pixelValue & header.GreenMask) >> GetShift(header.GreenMask)),
-                Blue = (byte) ((pixelValue & header.BlueMask) >> GetShift(header.BlueMask)),
-                Alpha = (byte)(header.AlphaMask == 0 ? 255 : (pixelValue & header.AlphaMask) >> GetShift(header.AlphaMask)),
+                Color = new Color
+                {
+                    Red = (byte) ((pixelValue & header.RedMask) >> GetShift(header.RedMask)),
+                    Green = (byte) ((pixelValue & header.GreenMask) >> GetShift(header.GreenMask)),
+                    Blue = (byte) ((pixelValue & header.BlueMask) >> GetShift(header.BlueMask)),
+                    Alpha = (byte)(header.AlphaMask == 0 ? 255 : (pixelValue & header.AlphaMask) >> GetShift(header.AlphaMask)),
+                },
                 X = column,
                 Y = row
             };
@@ -188,39 +193,51 @@ public class BitmapImage : IImage
         {
             <= 8 => new Pixel
             {
-                Red = colorTable[pixelValue].Red,
-                Green = colorTable[pixelValue].Green,
-                Blue = colorTable[pixelValue].Blue,
-                Alpha = 255,
+                Color = new Color
+                {
+                    Red = colorTable[pixelValue].Color.Red,
+                    Green = colorTable[pixelValue].Color.Green,
+                    Blue = colorTable[pixelValue].Color.Blue,
+                    Alpha = 255,
+                },
                 X = column,
                 Y = row
             },
             16 => new Pixel
             {
-                Red = (byte) ((pixelValue >> 8) & 15).Remap(0, 15, 0, 255).Floor(),
-                Green = (byte) ((pixelValue >> 4) & 15).Remap(0, 15, 0, 255).Floor(),
-                Blue = (byte) (pixelValue & 15).Remap(0, 15, 0, 255).Floor(),
-                Alpha = (byte) ((pixelValue >> 12) & 15).Remap(0, 15, 0, 255).Floor(),
+                Color = new Color
+                {
+                    Red = (byte) ((pixelValue >> 8) & 15).Remap(0, 15, 0, 255).Floor(),
+                    Green = (byte) ((pixelValue >> 4) & 15).Remap(0, 15, 0, 255).Floor(),
+                    Blue = (byte) (pixelValue & 15).Remap(0, 15, 0, 255).Floor(),
+                    Alpha = (byte) ((pixelValue >> 12) & 15).Remap(0, 15, 0, 255).Floor(),
+                },
                 X = column,
                 Y = row
             },
             24 => // 88800 RGBAX
                 new Pixel
                 {
-                    Red = (byte) (pixelValue & 255),
-                    Green = (byte) ((pixelValue >> 8) & 255),
-                    Blue = (byte) ((pixelValue >> 16) & 255),
-                    Alpha = 255,
+                    Color = new Color
+                    {
+                        Red = (byte) (pixelValue & 255),
+                        Green = (byte) ((pixelValue >> 8) & 255),
+                        Blue = (byte) ((pixelValue >> 16) & 255),
+                        Alpha = 255,
+                    },
                     X = column,
                     Y = row
                 },
             32 => // 8888
                 new Pixel
                 {
-                    Red = (byte) ((pixelValue >> 16) & 255),
-                    Green = (byte) ((pixelValue >> 8) & 255),
-                    Blue = (byte) (pixelValue & 255),
-                    Alpha = (byte) ((pixelValue >> 24) & 255),
+                    Color = new Color
+                    {
+                        Red = (byte) ((pixelValue >> 16) & 255),
+                        Green = (byte) ((pixelValue >> 8) & 255),
+                        Blue = (byte) (pixelValue & 255),
+                        Alpha = (byte) ((pixelValue >> 24) & 255),
+                    },
                     X = column,
                     Y = row
                 },

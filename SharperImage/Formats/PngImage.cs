@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using SharperImage.Exceptions;
@@ -9,7 +8,7 @@ public class PngImage : IImage
 {
     private uint _width;
     private uint _height;
-    private Pixel[,] _pixelData;
+    private Pixel[,] _pixelData  = {};
 
     public FileFormat FileFormat() => Formats.FileFormat.PNG;
 
@@ -19,6 +18,15 @@ public class PngImage : IImage
     public Pixel[,] PixelArray() => _pixelData;
     public Pixel GetPixel(uint x, uint y) => _pixelData[x, y];
     public void SetPixel(uint x, uint y, Pixel pixel) => _pixelData[x, y] = pixel;
+    
+    public PngImage() {}
+    public PngImage(uint width, uint height) : this(width, height, new Pixel[,]{}) { }
+    public PngImage(uint width, uint height, Pixel[,] pixelArray)
+    {
+        _width = width;
+        _height = height;
+        _pixelData = pixelArray;
+    }
 
     public static PngImage LoadImage(Stream stream)
     {
