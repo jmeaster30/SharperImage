@@ -10,12 +10,11 @@ namespace SharperImage.Viewer
         public static void Main(string[] args)
         {
             var filename = args[0];
-            var format = args[1] switch
+            var format = args[0][^3..] switch
             {
                 "png" => FileFormat.PNG,
                 "bmp" => FileFormat.BMP,
                 "qoi" => FileFormat.QOI,
-                "unformatted" => FileFormat.UNFORMATTED,
                 "gif" => FileFormat.GIF,
                 _ => throw new NotImplementedException(),
             };

@@ -44,7 +44,7 @@ public class UnformattedImage : IFormat
         stream.WriteU32(image.Height);
         stream.WriteByte(0); // TODO add compression methods
 
-        var pixels = image.ToRowRankPixelEnumerable();
+        var pixels = image.ToPixelEnumerable();
         foreach (var pix in pixels)
         {
             stream.WriteByte(pix.Color.Red);

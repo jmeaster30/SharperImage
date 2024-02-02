@@ -5,18 +5,14 @@ namespace SharperImage.Enumerators;
 
 public static class ImageExtensions
 {
-    public static PixelEnumerable<ColumnMajorPixelEnumerator> ToColumnRankPixelEnumerable(this Image image)
+    public static PixelEnumerable ToPixelEnumerable(this Image image, PixelOrdering ordering = PixelOrdering.ROW)
     {
-        // FIXME I would prefer if I could just do:
-        // return new PixelEnumerable<ColumnMajorPixelEnumerator>(image);
-        return new PixelEnumerable<ColumnMajorPixelEnumerator>(image, (i, idx) => new ColumnMajorPixelEnumerator(i, idx));
+        return new PixelEnumerable(image, ordering);
     }
-    
-    public static PixelEnumerable<RowMajorPixelEnumerator> ToRowRankPixelEnumerable(this Image image)
+
+    public static IEnumerable<Pixel> PixelFilter(this IEnumerable<Pixel> enumerable, Func<Pixel, Pixel> pixelFilter)
     {
-        // FIXME I would prefer if I could just do:
-        // return new PixelEnumerable<RowMajorPixelEnumerator>(image);
-        return new PixelEnumerable<RowMajorPixelEnumerator>(image, (i, idx) => new RowMajorPixelEnumerator(i, idx));
+        return new PixelFilterEnumerable(enumerable, pixelFilter);
     }
 
     public static Image ToImage(this IEnumerable<Pixel> pixelEnumerable, uint width, uint height)
@@ -26,7 +22,7 @@ public static class ImageExtensions
     
     public static Image ToImage(this IEnumerable<Pixel> pixelEnumerable, uint width, uint height, FileFormat format)
     {
-        Image image = new Image(width, height);
+        var image = new Image(width, height);
         
         foreach (var pixel in pixelEnumerable)
         {

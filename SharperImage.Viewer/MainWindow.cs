@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using Cairo;
 using Gdk;
 using Gtk;
 using SharperImage.Enumerators;
+using SharperImage.Filters;
 using SharperImage.Formats;
 using Application = Gtk.Application;
 using EventMotion = Gdk.EventMotion;
@@ -129,6 +131,8 @@ namespace SharperImage.Viewer
             private Color _background = new Color { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
 
             public Action<EventMotion> MouseMoveAction { get; set; }
+            public bool Grayscale { get; set; } = true;
+            public bool Invert { get; set; } = false;
 
             public ImageArea(Image image)
             {
@@ -153,7 +157,17 @@ namespace SharperImage.Viewer
             protected override bool OnDrawn(Context c)
             {
                 // TODO reduce calls to this function
-                foreach (var pixel in _image.ToRowRankPixelEnumerable())
+                IEnumerable<Pixel> pixels = _image.ToPixelEnumerable();
+                if (Grayscale)
+                {
+                    pixels = pixels.Grayscale();
+                } 
+                if (Invert)
+                {
+                    pixels = pixels.Invert();
+                } 
+                    
+                foreach (var pixel in pixels)
                 {
                     var alpha = pixel.Color.Alpha + (_background.Alpha * (255 - pixel.Color.Alpha) / 255);
                     var red = (pixel.Color.Red * pixel.Color.Alpha + _background.Red * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;

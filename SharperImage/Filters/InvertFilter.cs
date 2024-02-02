@@ -22,4 +22,9 @@ public static class InvertFilter
     {
         return image.Process(Invert);
     }
+    
+    public static IEnumerable<Pixel> Invert(this IEnumerable<Pixel> pixelEnumerable)
+    {
+        return pixelEnumerable.Process(Invert);
+    }
 }

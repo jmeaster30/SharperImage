@@ -2,20 +2,26 @@ using System.Collections;
 
 namespace SharperImage.Enumerators;
 
-public class PixelEnumerable<T> : IReadOnlyList<Pixel> where T : IEnumerator<Pixel>
+public class PixelEnumerable : IReadOnlyList<Pixel>
 {
+    private PixelEnumerator _pixelEnumerator;
     private Image _image;
-    private Func<Image, int, T> _constructor;
+    private uint _width;
+    private uint _height;
+    private PixelOrdering _ordering;
 
-    public PixelEnumerable(Image image, Func<Image, int, T> constructor)
+    public PixelEnumerable(Image image, PixelOrdering ordering)
     {
+        _pixelEnumerator = new PixelEnumerator(image, ordering);
         _image = image;
-        _constructor = constructor;
+        _width = image.Width;
+        _height = image.Height;
+        _ordering = ordering;
     }
     
     public IEnumerator<Pixel> GetEnumerator()
     {
-        return _constructor(_image, 0);
+        return _pixelEnumerator;
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -23,12 +29,12 @@ public class PixelEnumerable<T> : IReadOnlyList<Pixel> where T : IEnumerator<Pix
         return GetEnumerator();
     }
 
-    public int Count => (int)_image.Width * (int)_image.Height;
+    public int Count => (int)_width * (int)_height;
 
     public Pixel this[int index] {
         get
         {
-            var enumerator = _constructor(_image, index);
+            var enumerator = new PixelEnumerator(_image, index, _ordering);
             return enumerator.Current;
         }
     }

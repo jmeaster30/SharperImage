@@ -13,11 +13,16 @@ public static class ImageExtensions
     public static Image Process(this Image image, Func<Pixel, Pixel> pixelFilter)
     {
         var final = new Pixel[image.Width, image.Height];
-        foreach (var pixel in image.ToRowRankPixelEnumerable().Select(pixelFilter))
+        foreach (var pixel in image.ToPixelEnumerable().Select(pixelFilter))
         {
             final[pixel.X, pixel.Y] = pixel;
         }
 
         return new Image(image.Width, image.Height, final);
+    }
+
+    public static IEnumerable<Pixel> Process(this IEnumerable<Pixel> pixelEnumerable, Func<Pixel, Pixel> pixelFilter)
+    {
+        return pixelEnumerable.PixelFilter(pixelFilter);
     }
 }

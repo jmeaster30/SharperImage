@@ -19,7 +19,7 @@ public class QoiImage : IFormat
         stream.WriteByte(4); // TODO fix these
         stream.WriteByte(0);
 
-        var pixels = image.ToRowRankPixelEnumerable();
+        var pixels = image.ToPixelEnumerable();
         // pixel map specified by qoi spec
         var pixelHashMap = new Pixel[64];
         var lastPixel = new Pixel(0, 0, Color.Black);

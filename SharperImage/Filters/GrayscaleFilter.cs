@@ -23,4 +23,9 @@ public static class GrayscaleFilter
     {
         return image.Process(Grayscale);
     }
+
+    public static IEnumerable<Pixel> Grayscale(this IEnumerable<Pixel> pixelEnumerable)
+    {
+        return pixelEnumerable.Process(Grayscale);
+    }
 }
