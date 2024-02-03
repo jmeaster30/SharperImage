@@ -1,5 +1,6 @@
 using System.Text;
-using Newtonsoft.Json;
+using MyLib.Enumerables;
+using MyLib.Streams;
 using SharperImage.Enumerators;
 using SharperImage.Exceptions;
 using SharperImage.Formats.Interfaces;
@@ -130,7 +131,7 @@ public class QoiImage : IFormat
 
     public Image Decode(Stream stream)
     {
-        var headerBytes = stream.ReadBytes(0, 14);
+        var headerBytes = stream.ReadBytesAt(0, 14);
         var parsedHeader = new QoiHeader
         {
             MagicNumber = Encoding.Default.GetString(headerBytes[..4]),
@@ -157,22 +158,22 @@ public class QoiImage : IFormat
 
         while (fileOffset < fileLength)
         {
-            var tag = stream.ReadByte(fileOffset);
+            var tag = stream.ReadBytesAt(fileOffset, 1)[0];
             var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, defaultPixelColor));
             if (tag == 254) // QOI_OP_RGB
             {
-                var r = stream.ReadByte(fileOffset + 1);
-                var g = stream.ReadByte(fileOffset + 2);
-                var b = stream.ReadByte(fileOffset + 3);
+                var r = stream.ReadBytesAt(fileOffset + 1, 1)[0];
+                var g = stream.ReadBytesAt(fileOffset + 2, 1)[0];
+                var b = stream.ReadBytesAt(fileOffset + 3, 1)[0];
                 pixels.Add(new Pixel {Color = new Color { Red = r, Green = g, Blue = b, Alpha = lastPixel.Color.Alpha }});
                 fileOffset += 4;
             }
             else if (tag == 255) // QOI_OP_RGBA
             {
-                var r = stream.ReadByte(fileOffset + 1);
-                var g = stream.ReadByte(fileOffset + 2);
-                var b = stream.ReadByte(fileOffset + 3);
-                var a = stream.ReadByte(fileOffset + 4);
+                var r = stream.ReadBytesAt(fileOffset + 1, 1)[0];
+                var g = stream.ReadBytesAt(fileOffset + 2, 1)[0];
+                var b = stream.ReadBytesAt(fileOffset + 3, 1)[0];
+                var a = stream.ReadBytesAt(fileOffset + 4, 1)[0];
                 pixels.Add(new Pixel {Color = new Color { Red = r, Green = g, Blue = b, Alpha = a }});
                 fileOffset += 5;
             }
@@ -191,7 +192,7 @@ public class QoiImage : IFormat
             }
             else if ((tag & 192) == 128) // QOI_OP_LUMA
             {
-                var nextByte = stream.ReadByte(fileOffset + 1);
+                var nextByte = stream.ReadBytesAt(fileOffset + 1, 1)[0];
                 var diffGreen = (tag & 63) - 32;
                 var drdg = ((nextByte >> 4) & 15) - 8;
                 var dbdg = (nextByte & 15) - 8;

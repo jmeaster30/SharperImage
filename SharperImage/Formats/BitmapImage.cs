@@ -1,5 +1,9 @@
 using System.Text;
+using MyLib.Enumerables;
+using MyLib.Streams;
+using MyLib.Math;
 using SharperImage.Formats.Interfaces;
+using Math = System.Math;
 
 namespace SharperImage.Formats;
 
@@ -12,7 +16,7 @@ public class BitmapImage : IFormat
 
     public Image Decode(Stream stream)
     {
-        var fileHeader = stream.ReadBytes(0, 14);
+        var fileHeader = stream.ReadBytes(14);
         var parsedFileHeader = new BitmapFileHeader
         {
             MagicNumber = Encoding.Default.GetString(fileHeader[..2]),
@@ -22,8 +26,9 @@ public class BitmapImage : IFormat
         
         // TODO throw decode exception if the magic number is bunk
 
-        var headerSize = BitConverter.ToInt32(stream.ReadBytes(14, 4));
-        var dibHeader = stream.ReadBytes(14, headerSize);
+        var headerSize = BitConverter.ToInt32(stream.ReadBytes(4));
+        stream.Seek(-4, SeekOrigin.Current);
+        var dibHeader = stream.ReadBytes(headerSize);
         // TODO pull more of the header data here if the header isn't the default header
         var parsedDibHeader = new BitmapInfoHeader
         {
@@ -85,7 +90,7 @@ public class BitmapImage : IFormat
         if (parsedDibHeader.BitsPerPixel <= 8){
             for (var i = 0; i < parsedDibHeader.ColorPalette; i++)
             {
-                var color = stream.ReadBytes(colorTableOffset + i * colorTableEntrySize, colorTableEntrySize);
+                var color = stream.ReadBytesAt(colorTableOffset + i * colorTableEntrySize, colorTableEntrySize);
                 colorTable[i] = new Pixel
                     { Color = new Color { Red = color[0], Green = color[1], Blue = color[2], Alpha = color[3] }};
             }
@@ -100,7 +105,7 @@ public class BitmapImage : IFormat
 
         for (uint y = 0; y < Math.Abs(parsedDibHeader.BitmapHeight); y++)
         {
-            var rowBytes = stream.ReadBytes(parsedFileHeader.PixelArrayOffset + rowSize * y, rowSize);
+            var rowBytes = stream.ReadBytesAt(parsedFileHeader.PixelArrayOffset + rowSize * y, rowSize);
             var rowIndex = parsedDibHeader.BitmapHeight < 0 ? y : (uint)(parsedDibHeader.BitmapHeight - y - 1);
             for (uint x = 0; x < parsedDibHeader.BitmapWidth; x++)
             {

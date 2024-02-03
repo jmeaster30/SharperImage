@@ -7,7 +7,7 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
         <Title>SharperImage</Title>
-        <Authors>John Easterday</Authors>
+        <Authors>Lily Easterday</Authors>
         <Description>A cross-platform image encoding/decoding/processing library</Description>
         <Copyright>2023</Copyright>
         <PackageLicenseUrl>https://github.com/jmeaster30/SharperImage/blob/main/LICENSE</PackageLicenseUrl>
@@ -15,10 +15,13 @@
         <RepositoryType>git</RepositoryType>
         <Version>1.0.1-alpha</Version>
         <PackageId>Syrency.SharperImage</PackageId>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="Syrency.MyLib" Version="1.0.1-alpha" />
+        <None Include="../README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
 
 </Project>

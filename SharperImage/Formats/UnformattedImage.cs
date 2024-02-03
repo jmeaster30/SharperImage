@@ -1,3 +1,4 @@
+using MyLib.Streams;
 using SharperImage.Enumerators;
 using SharperImage.Formats.Interfaces;
 

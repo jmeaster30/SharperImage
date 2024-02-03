@@ -1,0 +1,56 @@
+name: nuget-publish
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - SharperImage/**
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  OUTPUT_PATH: SharperImage/bin/Release/*.nupkg
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4.0.0
+        with:
+          dotnet-version: 6.0.321
+      
+      # TODO make this run the unit tests too
+      - name: Build Dotnet
+        run: dotnet build -c release
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: nuget
+          if-no-files-found: error
+          retention-days: 7
+          path: ${{ env.OUTPUT_PATH }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [ build ]
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: nuget
+          path: ${{ env.OUTPUT_PATH }}
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v4.0.0
+        with:
+          dotnet-version: 6.0.321
+
+      - name: Publish NuGet package
+        run: |
+          for filename in "${{ env.OUTPUT_PATH }}"; do
+            dotnet nuget push "$filename" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          done

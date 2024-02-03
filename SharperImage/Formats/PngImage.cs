@@ -1,4 +1,6 @@
 using System.Text;
+using MyLib.Enumerables;
+using MyLib.Streams;
 using Newtonsoft.Json;
 using SharperImage.Exceptions;
 using SharperImage.Formats.Interfaces;
@@ -67,7 +69,7 @@ public class PngImage : IFormat
     {
         public uint Length { get; set; }
         public string Type { get; set; } = "";
-        public byte[] Data { get; set; } = { };
+        public byte[] Data { get; set; } = Array.Empty<byte>();
         public uint Crc { get; set; }
 
         public abstract bool Is<T>();
@@ -77,7 +79,7 @@ public class PngImage : IFormat
             var chunkLength = stream.ReadU32();
             var type = Encoding.UTF8.GetString(stream.ReadBytes(4));
             Console.WriteLine(type);
-            var data = stream.ReadBytes(chunkLength);
+            var data = stream.ReadBytes((int)chunkLength);
             var crc = stream.ReadU32();
             return type switch
             {
