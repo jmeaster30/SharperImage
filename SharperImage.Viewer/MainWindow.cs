@@ -131,7 +131,7 @@ namespace SharperImage.Viewer
             private Color _background = new Color { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
 
             public Action<EventMotion> MouseMoveAction { get; set; }
-            public bool Grayscale { get; set; } = true;
+            public bool Grayscale { get; set; } = false;
             public bool Invert { get; set; } = false;
 
             public ImageArea(Image image)

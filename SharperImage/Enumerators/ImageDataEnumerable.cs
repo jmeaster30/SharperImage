@@ -2,14 +2,53 @@ using System.Collections;
 
 namespace SharperImage.Enumerators;
 
-public class PixelEnumerator : IEnumerator<Pixel>
+public class ImageDataEnumerable : IReadOnlyList<Pixel>
+{
+    private ImageDataEnumerator _imageDataEnumerator;
+    private Image _image;
+    private uint _width;
+    private uint _height;
+    private PixelOrdering _ordering;
+
+    public ImageDataEnumerable(Image image, PixelOrdering ordering)
+    {
+        _imageDataEnumerator = new ImageDataEnumerator(image, ordering);
+        _image = image;
+        _width = image.Width;
+        _height = image.Height;
+        _ordering = ordering;
+    }
+    
+    public IEnumerator<Pixel> GetEnumerator()
+    {
+        return _imageDataEnumerator;
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    public int Count => (int)_width * (int)_height;
+
+    public Pixel this[int index] {
+        get
+        {
+            var enumerator = new ImageDataEnumerator(_image, index, _ordering);
+            return enumerator.Current;
+        }
+    }
+}
+
+
+public class ImageDataEnumerator : IEnumerator<Pixel>
 {
     private readonly Image _image;
     private readonly PixelOrdering _ordering;
     private uint _x;
     private uint _y;
 
-    public PixelEnumerator(Image image, PixelOrdering ordering = PixelOrdering.ROW)
+    public ImageDataEnumerator(Image image, PixelOrdering ordering = PixelOrdering.ROW)
     {
         _x = 0;
         _y = 0;
@@ -17,7 +56,7 @@ public class PixelEnumerator : IEnumerator<Pixel>
         _image = image;
     }
     
-    public PixelEnumerator(Image image, int index, PixelOrdering ordering = PixelOrdering.ROW)
+    public ImageDataEnumerator(Image image, int index, PixelOrdering ordering = PixelOrdering.ROW)
     {
         _ordering = ordering;
         _image = image;

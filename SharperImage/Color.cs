@@ -33,6 +33,7 @@ public struct Color
     public static bool operator ==(Color lhs, Color rhs) => lhs.Equals(rhs);
     public static bool operator !=(Color lhs, Color rhs) => !(lhs == rhs);
 
+    public static Color Clear = new(0, 0, 0, 0);
     public static Color Black = new(0, 0, 0, 255);
     public static Color White = new(255, 255, 255, 255);
 }
