@@ -21,7 +21,7 @@ public static class ImageExtensions
         return new Image(image.Width, image.Height, final);
     }
 
-    public static IEnumerable<Pixel> Process(this IEnumerable<Pixel> pixelEnumerable, Func<Pixel, Pixel> pixelFilter)
+    public static IPixelEnumerable Process(this IPixelEnumerable pixelEnumerable, Func<Pixel, Pixel> pixelFilter)
     {
         return pixelEnumerable.PixelFilter(pixelFilter);
     }

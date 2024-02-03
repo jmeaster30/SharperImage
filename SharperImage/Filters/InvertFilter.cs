@@ -1,3 +1,5 @@
+using SharperImage.Enumerators;
+
 namespace SharperImage.Filters;
 
 public static class InvertFilter
@@ -9,7 +11,7 @@ public static class InvertFilter
             Red = (byte)(255 - color.Red),
             Green = (byte)(255 - color.Green),
             Blue = (byte)(255 - color.Blue),
-            Alpha = (byte)(255 - color.Alpha)
+            Alpha = color.Alpha
         };
     }
 
@@ -23,7 +25,7 @@ public static class InvertFilter
         return image.Process(Invert);
     }
     
-    public static IEnumerable<Pixel> Invert(this IEnumerable<Pixel> pixelEnumerable)
+    public static IPixelEnumerable Invert(this IPixelEnumerable pixelEnumerable)
     {
         return pixelEnumerable.Process(Invert);
     }

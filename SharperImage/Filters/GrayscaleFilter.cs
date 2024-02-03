@@ -1,3 +1,5 @@
+using SharperImage.Enumerators;
+
 namespace SharperImage.Filters;
 
 public static class GrayscaleFilter
@@ -24,7 +26,7 @@ public static class GrayscaleFilter
         return image.Process(Grayscale);
     }
 
-    public static IEnumerable<Pixel> Grayscale(this IEnumerable<Pixel> pixelEnumerable)
+    public static IPixelEnumerable Grayscale(this IPixelEnumerable pixelEnumerable)
     {
         return pixelEnumerable.Process(Grayscale);
     }

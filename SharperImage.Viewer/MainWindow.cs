@@ -8,6 +8,7 @@ using SharperImage.Filters;
 using SharperImage.Formats;
 using Application = Gtk.Application;
 using EventMotion = Gdk.EventMotion;
+using Selection = Gtk.Selection;
 using Window = Gtk.Window;
 
 namespace SharperImage.Viewer
@@ -81,6 +82,11 @@ namespace SharperImage.Viewer
             hbox.Add(vboxLabels);
 
             var backgroundSliders = new VBox(false, 0);
+            var grayscaleOption = new CheckButton("Grayscale");
+            grayscaleOption.Toggled += GrayscaleOnToggle;
+            var invertOption = new CheckButton("Invert");
+            invertOption.Toggled += InvertOnToggle;
+            
             var redSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var redScale = new HScale(redSlider);
             redScale.ChangeValue += RedScaleOnChangeValue;
@@ -90,6 +96,8 @@ namespace SharperImage.Viewer
             var blueSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var blueScale = new HScale(blueSlider);
             blueScale.ChangeValue += BlueScaleOnChangeValue;
+            backgroundSliders.Add(grayscaleOption);
+            backgroundSliders.Add(invertOption);
             backgroundSliders.Add(redScale);
             backgroundSliders.Add(greenScale);
             backgroundSliders.Add(blueScale);
@@ -123,16 +131,26 @@ namespace SharperImage.Viewer
         {
             MyImageArea.SetBackground(null, null, null, (byte)((HScale)o).Value);
         }
+        
+        private void GrayscaleOnToggle(object o, EventArgs args)
+        {
+            MyImageArea.ToggleGrayscale();
+        }
+        
+        private void InvertOnToggle(object o, EventArgs args)
+        {
+            MyImageArea.ToggleInvert();
+        }
 
         private class ImageArea : DrawingArea
         {
-            private Image _image;
+            private readonly Image _image;
 
             private Color _background = new Color { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
 
             public Action<EventMotion> MouseMoveAction { get; set; }
-            public bool Grayscale { get; set; } = false;
-            public bool Invert { get; set; } = false;
+            private bool UseGrayscale { get; set; } = false;
+            private bool UseInvert { get; set; } = false;
 
             public ImageArea(Image image)
             {
@@ -154,21 +172,28 @@ namespace SharperImage.Viewer
                 QueueDraw();
             }
 
+            public void ToggleGrayscale()
+            {
+                UseGrayscale = !UseGrayscale;
+                QueueDraw();
+            }
+
+            public void ToggleInvert()
+            {
+                UseInvert = !UseInvert;
+                QueueDraw();
+            }
+
             protected override bool OnDrawn(Context c)
             {
                 // TODO reduce calls to this function
-                IEnumerable<Pixel> pixels = _image.ToPixelEnumerable();
-                if (Grayscale)
-                {
-                    pixels = pixels.Grayscale();
-                } 
-                if (Invert)
-                {
-                    pixels = pixels.Invert();
-                } 
+                var pixels = _image.ToPixelEnumerable()
+                    .ConditionalApply(UseGrayscale, e => e.Grayscale())
+                    .ConditionalApply(UseInvert, e => e.Invert());
                     
                 foreach (var pixel in pixels)
                 {
+                    //Console.WriteLine($"Pixel ({pixel.X}, {pixel.Y}) ({pixel.Color.Red}, {pixel.Color.Green}, {pixel.Color.Blue}, {pixel.Color.Alpha})");
                     var alpha = pixel.Color.Alpha + (_background.Alpha * (255 - pixel.Color.Alpha) / 255);
                     var red = (pixel.Color.Red * pixel.Color.Alpha + _background.Red * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
                     var green = (pixel.Color.Green * pixel.Color.Alpha + _background.Green * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;

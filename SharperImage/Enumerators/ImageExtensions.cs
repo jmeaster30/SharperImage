@@ -9,14 +9,31 @@ public static class ImageExtensions
         return new ImageDataEnumerable(image, ordering);
     }
 
-    public static IEnumerable<Pixel> PixelFilter(this IEnumerable<Pixel> enumerable, Func<Pixel, Pixel> pixelFilter)
+    public static IPixelEnumerable ConditionalApply(this IPixelEnumerable enumerable, bool condition,
+        Func<IPixelEnumerable, IPixelEnumerable> trueEnumerable)
+    {
+        return enumerable.ConditionalApply(condition, trueEnumerable, pixelEnumerable => pixelEnumerable);
+    }
+    
+    public static IPixelEnumerable ConditionalApply(this IPixelEnumerable enumerable, bool condition,
+        Func<IPixelEnumerable, IPixelEnumerable> trueEnumerable, Func<IPixelEnumerable, IPixelEnumerable> falseEnumerable)
+    {
+        return condition ? trueEnumerable(enumerable) : falseEnumerable(enumerable);
+    }
+
+    public static IPixelEnumerable PixelFilter(this IPixelEnumerable enumerable, Func<Pixel, Pixel> pixelFilter)
     {
         return new PixelFilterEnumerable(enumerable, pixelFilter);
     }
-    
-    public static Image ToImage(this IEnumerable<Pixel> pixelEnumerable, uint width, uint height)
+
+    public static IPixelEnumerable Resize(this IPixelEnumerable enumerable, uint newWidth, uint newHeight)
     {
-        var image = new Image(width, height);
+        return new ResizeEnumerable(enumerable, newWidth, newHeight);
+    }
+    
+    public static Image ToImage(this IPixelEnumerable pixelEnumerable)
+    {
+        var image = new Image(pixelEnumerable.GetWidth(), pixelEnumerable.GetHeight());
         
         foreach (var pixel in pixelEnumerable)
         {

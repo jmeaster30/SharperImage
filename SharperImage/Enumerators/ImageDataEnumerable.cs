@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace SharperImage.Enumerators;
 
-public class ImageDataEnumerable : IReadOnlyList<Pixel>
+public class ImageDataEnumerable : IPixelEnumerable
 {
     private ImageDataEnumerator _imageDataEnumerator;
     private Image _image;
@@ -29,13 +29,26 @@ public class ImageDataEnumerable : IReadOnlyList<Pixel>
         return GetEnumerator();
     }
 
-    public int Count => (int)_width * (int)_height;
+    public uint GetWidth() => _width;
+    public uint GetHeight() => _height;
+    
+    public int Count => (int)GetWidth() * (int)GetHeight();
 
     public Pixel this[int index] {
         get
         {
-            var enumerator = new ImageDataEnumerator(_image, index, _ordering);
-            return enumerator.Current;
+            _imageDataEnumerator.SetIndex((uint)index);
+            return _imageDataEnumerator.Current;
+        }
+    }
+
+    public Pixel this[uint x, uint y]
+    {
+        get
+        {
+            _imageDataEnumerator.SetX(x);
+            _imageDataEnumerator.SetY(y);
+            return _imageDataEnumerator.Current;
         }
     }
 }
@@ -54,22 +67,6 @@ public class ImageDataEnumerator : IEnumerator<Pixel>
         _y = 0;
         _ordering = ordering;
         _image = image;
-    }
-    
-    public ImageDataEnumerator(Image image, int index, PixelOrdering ordering = PixelOrdering.ROW)
-    {
-        _ordering = ordering;
-        _image = image;
-        _x = _ordering switch
-        {
-            PixelOrdering.COLUMN => (uint)index / image.Width,
-            PixelOrdering.ROW => (uint)index % image.Width
-        };
-        _y = _ordering switch
-        {
-            PixelOrdering.COLUMN => (uint)index % image.Height,
-            PixelOrdering.ROW => (uint)index / image.Height
-        };
     }
 
     public bool MoveNext()
@@ -118,4 +115,21 @@ public class ImageDataEnumerator : IEnumerator<Pixel>
     {
         GC.SuppressFinalize(this);
     }
+
+    public void SetIndex(uint index)
+    {
+        _x = _ordering switch
+        {
+            PixelOrdering.COLUMN => index / _image.Width,
+            PixelOrdering.ROW => index % _image.Width
+        };
+        _y = _ordering switch
+        {
+            PixelOrdering.COLUMN => index % _image.Height,
+            PixelOrdering.ROW => index / _image.Height
+        };
+    }
+
+    public void SetX(uint x) => _x = x;
+    public void SetY(uint y) => _y = y;
 }
