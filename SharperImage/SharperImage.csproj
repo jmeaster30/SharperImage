@@ -13,7 +13,7 @@
         <PackageLicenseUrl>https://github.com/jmeaster30/SharperImage/blob/main/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/jmeaster30/SharperImage</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <Version>1.0.1-alpha</Version>
+        <Version>1.0.2-alpha</Version>
         <PackageId>Syrency.SharperImage</PackageId>
         <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
