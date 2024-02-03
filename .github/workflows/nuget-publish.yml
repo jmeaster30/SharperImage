@@ -42,7 +42,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: nuget
-          path: ${{ env.OUTPUT_PATH }}
+          path: SharperImage/bin/Release
 
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v4.0.0
