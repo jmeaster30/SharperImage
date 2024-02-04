@@ -11,17 +11,10 @@ using Window = Gtk.Window;
 
 namespace SharperImage.Viewer
 {
-    class MainWindow : Window
+    internal class MainWindow : Window
     {
-        private ImageArea MyImageArea;
+        private readonly ImageArea _myImageArea;
 
-        private Label HoverPixelX;
-        private Label HoverPixelY;
-        private Label HoverPixelColorRed;
-        private Label HoverPixelColorGreen;
-        private Label HoverPixelColorBlue;
-        private Label HoverPixelColorAlpha;
-        
         public MainWindow(string filename, FileFormat format) : this(Image.Decode(filename, format)) { }
         public MainWindow(Image image)  : base("SharperImage.Viewer")
         {
@@ -30,22 +23,29 @@ namespace SharperImage.Viewer
             
             Console.WriteLine($"Image {image.Width} x {image.Height}");
 
-            MyImageArea = new ImageArea(image);
-            MyImageArea.AddEvents((int)EventMask.PointerMotionMask);
-            MyImageArea.MouseMoveAction += delegate(EventMotion motion)
+            var hoverPixelX = new Label("X:");
+            var hoverPixelY = new Label("Y:");
+            var hoverPixelColorRed = new Label("Red:");
+            var hoverPixelColorGreen = new Label("Green:");
+            var hoverPixelColorBlue = new Label("Blue:");
+            var hoverPixelColorAlpha = new Label("Alpha:");
+            
+            _myImageArea = new ImageArea(image);
+            _myImageArea.AddEvents((int)EventMask.PointerMotionMask);
+            _myImageArea.MouseMoveAction += delegate(EventMotion motion)
             {
                 var x = (int)Math.Clamp(motion.X, 0, image.Width - 1);
                 var y = (int)Math.Clamp(motion.Y, 0, image.Height - 1);
                 try
                 {
                     var pix = image.PixelData[x, y];
-                    var composite = MyImageArea.BackgroundColor.Composite(pix.Color);
-                    HoverPixelX.Text = $"X: {x}";
-                    HoverPixelY.Text = $"Y: {y}";
-                    HoverPixelColorRed.Text = $"Red: {pix.Color.RedByte} ({composite.RedByte})";
-                    HoverPixelColorGreen.Text = $"Green: {pix.Color.GreenByte} ({composite.GreenByte})";
-                    HoverPixelColorBlue.Text = $"Blue: {pix.Color.BlueByte} ({composite.BlueByte})";
-                    HoverPixelColorAlpha.Text = $"Alpha: {pix.Color.AlphaByte} ({composite.AlphaByte})";
+                    var composite = _myImageArea.BackgroundColor.Composite(pix.Color);
+                    hoverPixelX.Text = $"X: {x}";
+                    hoverPixelY.Text = $"Y: {y}";
+                    hoverPixelColorRed.Text = $"Red: {pix.Color.RedByte} ({composite.RedByte})";
+                    hoverPixelColorGreen.Text = $"Green: {pix.Color.GreenByte} ({composite.GreenByte})";
+                    hoverPixelColorBlue.Text = $"Blue: {pix.Color.BlueByte} ({composite.BlueByte})";
+                    hoverPixelColorAlpha.Text = $"Alpha: {pix.Color.AlphaByte} ({composite.AlphaByte})";
                 }
                 catch
                 {
@@ -55,49 +55,42 @@ namespace SharperImage.Viewer
             };
             
             var swin = new ScrolledWindow();
-            swin.Add(MyImageArea);
+            swin.Add(_myImageArea);
             
             var widthLabel = new Label($"Width: {image.Width}");
             var heightLabel = new Label($"Height {image.Height}");
- 
-            HoverPixelX = new Label("X:");
-            HoverPixelY = new Label("Y:");
-            HoverPixelColorRed = new Label("Red:");
-            HoverPixelColorGreen = new Label("Green:");
-            HoverPixelColorBlue = new Label("Blue:");
-            HoverPixelColorAlpha = new Label("Alpha:");
 
-            var vboxLabels = new VBox(false, 0);
+            var vboxLabels = new Box(Orientation.Vertical, 0);
             vboxLabels.Add(widthLabel);
             vboxLabels.Add(heightLabel);
-            vboxLabels.Add(HoverPixelX);
-            vboxLabels.Add(HoverPixelY);
-            vboxLabels.Add(HoverPixelColorRed);
-            vboxLabels.Add(HoverPixelColorGreen);
-            vboxLabels.Add(HoverPixelColorBlue);
-            vboxLabels.Add(HoverPixelColorAlpha);
+            vboxLabels.Add(hoverPixelX);
+            vboxLabels.Add(hoverPixelY);
+            vboxLabels.Add(hoverPixelColorRed);
+            vboxLabels.Add(hoverPixelColorGreen);
+            vboxLabels.Add(hoverPixelColorBlue);
+            vboxLabels.Add(hoverPixelColorAlpha);
             
-            var hbox = new HBox(false, 0);
+            var hbox = new Box(Orientation.Horizontal, 0);
             hbox.Add(vboxLabels);
 
-            var backgroundSliders = new VBox(false, 0);
+            var backgroundSliders = new Box(Orientation.Vertical, 0);
             var grayscaleOption = new CheckButton("Grayscale");
             grayscaleOption.Toggled += GrayscaleOnToggle;
             var invertOption = new CheckButton("Invert");
             invertOption.Toggled += InvertOnToggle;
             
             var redSlider = new Adjustment(0, 0, 255, 1, 15, 15);
-            var redScale = new HScale(redSlider);
-            redScale.ValueChanged += RedScaleOnChangeValue;
+            var redScale = new Scale(Orientation.Horizontal, redSlider);
+            redSlider.ValueChanged += RedScaleOnChangeValue;
             var greenSlider = new Adjustment(0, 0, 255, 1, 15, 15);
-            var greenScale = new HScale(greenSlider);
+            var greenScale = new Scale(Orientation.Horizontal, greenSlider);
             greenSlider.ValueChanged += GreenScaleOnChangeValue;
             var blueSlider = new Adjustment(0, 0, 255, 1, 15, 15);
-            var blueScale = new HScale(blueSlider);
-            blueScale.ValueChanged += BlueScaleOnChangeValue;
+            var blueScale = new Scale(Orientation.Horizontal, blueSlider);
+            blueSlider.ValueChanged += BlueScaleOnChangeValue;
             var alphaSlider = new Adjustment(0, 0, 255, 1, 15, 15);
-            var alphaScale = new HScale(alphaSlider);
-            alphaScale.ValueChanged += AlphaScaleOnChangeValue;
+            var alphaScale = new Scale(Orientation.Horizontal, alphaSlider);
+            alphaSlider.ValueChanged += AlphaScaleOnChangeValue;
             backgroundSliders.Add(grayscaleOption);
             backgroundSliders.Add(invertOption);
             backgroundSliders.Add(redScale);
@@ -106,7 +99,7 @@ namespace SharperImage.Viewer
             backgroundSliders.Add(alphaScale);
             hbox.Add(backgroundSliders);
             
-            var vbox = new VPaned();
+            var vbox = new Paned(Orientation.Vertical);
             vbox.BorderWidth = 12;
             vbox.Position = 900;
             vbox.Pack1(swin, false, false);
@@ -117,32 +110,32 @@ namespace SharperImage.Viewer
 
         private void RedScaleOnChangeValue(object o, EventArgs args)
         {
-            MyImageArea.SetBackground((byte)((HScale)o).Value, null, null, null);
+            _myImageArea.SetBackground((byte)((HScale)o).Value, null, null, null);
         }
         
         private void GreenScaleOnChangeValue(object o, EventArgs args)
         {
-            MyImageArea.SetBackground(null, (byte)((HScale)o).Value, null, null);
+            _myImageArea.SetBackground(null, (byte)((HScale)o).Value, null, null);
         }
         
         private void BlueScaleOnChangeValue(object o, EventArgs args)
         {
-            MyImageArea.SetBackground(null, null, (byte)((HScale)o).Value, null);
+            _myImageArea.SetBackground(null, null, (byte)((HScale)o).Value, null);
         }
         
         private void AlphaScaleOnChangeValue(object o, EventArgs args)
         {
-            MyImageArea.SetBackground(null, null, null, (byte)((HScale)o).Value);
+            _myImageArea.SetBackground(null, null, null, (byte)((HScale)o).Value);
         }
         
         private void GrayscaleOnToggle(object o, EventArgs args)
         {
-            MyImageArea.ToggleGrayscale();
+            _myImageArea.ToggleGrayscale();
         }
         
         private void InvertOnToggle(object o, EventArgs args)
         {
-            MyImageArea.ToggleInvert();
+            _myImageArea.ToggleInvert();
         }
 
         private class ImageArea : DrawingArea
@@ -152,8 +145,8 @@ namespace SharperImage.Viewer
             public Color BackgroundColor = Color.Clear;
 
             public Action<EventMotion> MouseMoveAction { get; set; }
-            private bool UseGrayscale { get; set; } = false;
-            private bool UseInvert { get; set; } = false;
+            private bool UseGrayscale { get; set; }
+            private bool UseInvert { get; set; }
 
             public ImageArea(Image image)
             {

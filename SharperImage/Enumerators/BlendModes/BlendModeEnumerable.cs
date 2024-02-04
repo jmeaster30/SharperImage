@@ -6,9 +6,9 @@ public class BlendModeEnumerable : IPixelEnumerable
 {
     private BlendModeEnumerator _enumerator;
 
-    public BlendModeEnumerable(IPixelEnumerable enumerableA, IPixelEnumerable enumerableB, BlendMode mode)
+    public BlendModeEnumerable(IPixelEnumerable enumerableA, IPixelEnumerable enumerableB, Func<Color, Color, Color> blendFunction)
     {
-        _enumerator = new BlendModeEnumerator(enumerableA, enumerableB, mode);
+        _enumerator = new BlendModeEnumerator(enumerableA, enumerableB, blendFunction);
     }
     
     public IEnumerator<Pixel> GetEnumerator()
@@ -53,11 +53,11 @@ public class BlendModeEnumerator : IEnumerator<Pixel>
     private uint _y;
     private readonly uint _width;
     private readonly uint _height;
-    private readonly BlendMode _mode;
+    private readonly Func<Color, Color, Color> _blendFunction;
 
-    public BlendModeEnumerator(IPixelEnumerable a, IPixelEnumerable b, BlendMode mode)
+    public BlendModeEnumerator(IPixelEnumerable a, IPixelEnumerable b, Func<Color, Color, Color>  blendFunction)
     {
-        _mode = mode;
+        _blendFunction = blendFunction;
         _a = a;
         _b = b;
         _x = 0;
@@ -90,38 +90,7 @@ public class BlendModeEnumerator : IEnumerator<Pixel>
         {
             var a = _x < _a.GetWidth() && _y < _a.GetHeight() ? _a[_x, _y].Color : Color.Clear;
             var b = _x < _b.GetWidth() && _y < _b.GetHeight() ? _b[_x, _y].Color : Color.Clear;
-            return new Pixel(_x, _y, _mode switch
-            {
-                BlendMode.ADD => a.Add(b),
-                BlendMode.AND => a.And(b),
-                BlendMode.CHANNEL_DISSOLVE => a.ChannelDissolve(b),
-                BlendMode.COLOR => a.ColorBlend(b),
-                BlendMode.COLOR_BURN => a.ColorBurn(b),
-                BlendMode.COLOR_DODGE => a.ColorDodge(b),
-                BlendMode.DARKEN => a.Darken(b),
-                BlendMode.DIFFERENCE => a.Difference(b),
-                BlendMode.DISSOLVE => a.Dissolve(b),
-                BlendMode.DIVIDE => a.Divide(b),
-                BlendMode.EXCLUSION => a.Exclusion(b),
-                BlendMode.HARD_LIGHT => a.HardLight(b),
-                BlendMode.HUE => a.Hue(b),
-                BlendMode.LIGHTEN => a.Lighten(b),
-                BlendMode.LINEAR_BURN => a.LinearBurn(b),
-                BlendMode.LUMINOSITY => a.Luminosity(b),
-                BlendMode.MULTIPLY => a.Multiply(b),
-                BlendMode.NAND => a.Nand(b),
-                BlendMode.NORMAL => a.Normal(b),
-                BlendMode.OR => a.Or(b),
-                BlendMode.OVERLAY => a.Overlay(b),
-                BlendMode.PLUS_DARKER => a.PlusDarker(b),
-                BlendMode.PLUS_LIGHTER => a.PlusLighter(b),
-                BlendMode.SATURATION => a.Saturation(b),
-                BlendMode.SCREEN => a.Screen(b),
-                BlendMode.SOFT_LIGHT => a.SoftLight(b),
-                BlendMode.SUBTRACT => a.Subtract(b),
-                BlendMode.XOR => a.Xor(b),
-                _ => throw new ArgumentOutOfRangeException()
-            });
+            return new Pixel(_x, _y, _blendFunction(a, b));
         }
     }
 
