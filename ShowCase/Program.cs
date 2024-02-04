@@ -1,8 +1,13 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using SharperImage.Enumerators;
+using SharperImage.Enumerators.BlendModes;
 using SharperImage.Formats;
 using SharperImage.Viewer;
 
-using var imageFile = File.OpenRead("images/qoi/dice.qoi");
-var image = FileFormat.QOI.GetFormatter().Decode(imageFile);
-Viewer.Open(image);
+using var imageFile1 = File.OpenRead("images/qoi/dice.qoi");
+using var imageFile2 = File.OpenRead("images/qoi/kodim23.qoi");
+var diceImage = FileFormat.QOI.GetFormatter().Decode(imageFile1).ToPixelEnumerable();
+var kodimImage = FileFormat.QOI.GetFormatter().Decode(imageFile2).ToPixelEnumerable();
+var result = (kodimImage, diceImage).Blend(BlendMode.XOR);
+Viewer.Open(result.ToImage());

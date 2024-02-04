@@ -50,16 +50,17 @@ public class QoiImage : IFormat
                 }
                 run = 0;
 
-                var redDiff = pixel.Color.Red - lastPixel.Color.Red;
-                var greenDiff = pixel.Color.Green - lastPixel.Color.Green;
-                var blueDiff = pixel.Color.Blue - lastPixel.Color.Blue;
-                var alphaDiff = pixel.Color.Alpha - lastPixel.Color.Alpha;
+                var redDiff = (int)Math.Floor(255 * pixel.Color.Red - 255 * lastPixel.Color.Red);
+                var greenDiff = (int)Math.Floor(255 * pixel.Color.Green - 255 * lastPixel.Color.Green);
+                var blueDiff = (int)Math.Floor(255 * pixel.Color.Blue - 255 * lastPixel.Color.Blue);
+                var alphaDiff = (int)Math.Floor(255 * pixel.Color.Alpha - 255 * lastPixel.Color.Alpha);
                 var drdg = redDiff - greenDiff;
                 var dbdg = blueDiff - greenDiff;
 
                 if (alphaDiff != 0)
                 {
-                    stream.Write(OpRgba(pixel.Color.Red, pixel.Color.Green, pixel.Color.Blue, pixel.Color.Alpha));
+                    var rgbaBytes = pixel.Color.Rgba();
+                    stream.Write(OpRgba(rgbaBytes[0], rgbaBytes[1], rgbaBytes[2], rgbaBytes[3]));
                 }
                 else if (redDiff is <= 1 and >= -2
                          && greenDiff is <= 1 and >= -2
@@ -75,7 +76,8 @@ public class QoiImage : IFormat
                 }
                 else
                 {
-                    stream.Write(OpRgb(pixel.Color.Red, pixel.Color.Green, pixel.Color.Blue));
+                    var rgbaBytes = pixel.Color.Rgba();
+                    stream.Write(OpRgb(rgbaBytes[0], rgbaBytes[1], rgbaBytes[2]));
                 }
 
             }
@@ -159,13 +161,13 @@ public class QoiImage : IFormat
         while (fileOffset < fileLength)
         {
             var tag = stream.ReadBytesAt(fileOffset, 1)[0];
-            var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, defaultPixelColor));
+            var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, Color.Black));
             if (tag == 254) // QOI_OP_RGB
             {
                 var r = stream.ReadBytesAt(fileOffset + 1, 1)[0];
                 var g = stream.ReadBytesAt(fileOffset + 2, 1)[0];
                 var b = stream.ReadBytesAt(fileOffset + 3, 1)[0];
-                pixels.Add(new Pixel {Color = new Color { Red = r, Green = g, Blue = b, Alpha = lastPixel.Color.Alpha }});
+                pixels.Add(new Pixel {Color = new Color(r, g, b, lastPixel.Color.AlphaByte)});
                 fileOffset += 4;
             }
             else if (tag == 255) // QOI_OP_RGBA
@@ -174,7 +176,7 @@ public class QoiImage : IFormat
                 var g = stream.ReadBytesAt(fileOffset + 2, 1)[0];
                 var b = stream.ReadBytesAt(fileOffset + 3, 1)[0];
                 var a = stream.ReadBytesAt(fileOffset + 4, 1)[0];
-                pixels.Add(new Pixel {Color = new Color { Red = r, Green = g, Blue = b, Alpha = a }});
+                pixels.Add(new Pixel {Color = new Color(r, g, b, a)});
                 fileOffset += 5;
             }
             else if ((tag & 192) == 0) // QOI_OP_INDEX
@@ -184,10 +186,10 @@ public class QoiImage : IFormat
             }
             else if ((tag & 192) == 64) // QOI_OP_DIFF
             {
-                var nr = lastPixel.Color.Red.ByteSum(((tag >> 4) & 3) - 2);
-                var ng = lastPixel.Color.Green.ByteSum(((tag >> 2) & 3) - 2);
-                var nb = lastPixel.Color.Blue.ByteSum((tag & 3) - 2);
-                pixels.Add(new Pixel {Color = new Color { Red = nr, Green = ng, Blue = nb, Alpha = lastPixel.Color.Alpha }});
+                var nr = lastPixel.Color.RedByte.ByteSum(((tag >> 4) & 3) - 2);
+                var ng = lastPixel.Color.GreenByte.ByteSum(((tag >> 2) & 3) - 2);
+                var nb = lastPixel.Color.BlueByte.ByteSum((tag & 3) - 2);
+                pixels.Add(new Pixel {Color = new Color(nr, ng, nb, lastPixel.Color.AlphaByte)});
                 fileOffset += 1;
             }
             else if ((tag & 192) == 128) // QOI_OP_LUMA
@@ -196,10 +198,10 @@ public class QoiImage : IFormat
                 var diffGreen = (tag & 63) - 32;
                 var drdg = ((nextByte >> 4) & 15) - 8;
                 var dbdg = (nextByte & 15) - 8;
-                var nr = lastPixel.Color.Red.ByteSum(diffGreen + drdg);
-                var ng = lastPixel.Color.Green.ByteSum(diffGreen);
-                var nb = lastPixel.Color.Blue.ByteSum(diffGreen + dbdg);
-                pixels.Add(new Pixel {Color = new Color {Red = nr, Green = ng, Blue = nb, Alpha = lastPixel.Color.Alpha}});
+                var nr = lastPixel.Color.RedByte.ByteSum(diffGreen + drdg);
+                var ng = lastPixel.Color.GreenByte.ByteSum(diffGreen);
+                var nb = lastPixel.Color.BlueByte.ByteSum(diffGreen + dbdg);
+                pixels.Add(new Pixel {Color = new Color(nr, ng, nb, lastPixel.Color.AlphaByte)});
                 fileOffset += 2;
             }
             else if ((tag & 192) == 192) // QOI_OP_RUN
@@ -231,7 +233,7 @@ public class QoiImage : IFormat
 
     private static int GetPixelHash(Pixel pixel)
     {
-        return (pixel.Color.Red * 3 + pixel.Color.Green * 5 + pixel.Color.Blue * 7 + pixel.Color.Alpha * 11) % 64;
+        return (pixel.Color.RedByte * 3 + pixel.Color.GreenByte * 5 + pixel.Color.BlueByte * 7 + pixel.Color.AlphaByte * 11) % 64;
     }
 
     private static IEnumerable<Pixel> MakeCopies(Pixel pixel, int count)

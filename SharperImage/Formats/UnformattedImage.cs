@@ -1,3 +1,4 @@
+using MyLib.Bytes;
 using MyLib.Streams;
 using SharperImage.Enumerators;
 using SharperImage.Formats.Interfaces;
@@ -48,10 +49,11 @@ public class UnformattedImage : IFormat
         var pixels = image.ToPixelEnumerable();
         foreach (var pix in pixels)
         {
-            stream.WriteByte(pix.Color.Red);
-            stream.WriteByte(pix.Color.Green);
-            stream.WriteByte(pix.Color.Blue);
-            stream.WriteByte(pix.Color.Alpha);
+            var bytes = pix.Color.Rgba();
+            stream.WriteByte(bytes[0]);
+            stream.WriteByte(bytes[1]);
+            stream.WriteByte(bytes[2]);
+            stream.WriteByte(bytes[3]);
         }
     }
 }

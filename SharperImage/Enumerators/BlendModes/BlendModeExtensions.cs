@@ -6,4 +6,9 @@ public static class BlendModeExtensions
     {
         return new BlendModeEnumerable(a, b, mode);
     }
+
+    public static IPixelEnumerable Blend(this (IPixelEnumerable, IPixelEnumerable) a, BlendMode mode)
+    {
+        return new BlendModeEnumerable(a.Item1, a.Item2, mode);
+    }
 }

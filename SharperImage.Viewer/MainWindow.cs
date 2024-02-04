@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Cairo;
 using Gdk;
 using Gtk;
@@ -8,7 +7,6 @@ using SharperImage.Filters;
 using SharperImage.Formats;
 using Application = Gtk.Application;
 using EventMotion = Gdk.EventMotion;
-using Selection = Gtk.Selection;
 using Window = Gtk.Window;
 
 namespace SharperImage.Viewer
@@ -41,12 +39,13 @@ namespace SharperImage.Viewer
                 try
                 {
                     var pix = image.PixelData[x, y];
+                    var composite = MyImageArea.BackgroundColor.Composite(pix.Color);
                     HoverPixelX.Text = $"X: {x}";
                     HoverPixelY.Text = $"Y: {y}";
-                    HoverPixelColorRed.Text = $"Red: {pix.Color.Red}";
-                    HoverPixelColorGreen.Text = $"Green: {pix.Color.Green}";
-                    HoverPixelColorBlue.Text = $"Blue: {pix.Color.Blue}";
-                    HoverPixelColorAlpha.Text = $"Alpha: {pix.Color.Alpha}";
+                    HoverPixelColorRed.Text = $"Red: {pix.Color.RedByte} ({composite.RedByte})";
+                    HoverPixelColorGreen.Text = $"Green: {pix.Color.GreenByte} ({composite.GreenByte})";
+                    HoverPixelColorBlue.Text = $"Blue: {pix.Color.BlueByte} ({composite.BlueByte})";
+                    HoverPixelColorAlpha.Text = $"Alpha: {pix.Color.AlphaByte} ({composite.AlphaByte})";
                 }
                 catch
                 {
@@ -89,18 +88,22 @@ namespace SharperImage.Viewer
             
             var redSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var redScale = new HScale(redSlider);
-            redScale.ChangeValue += RedScaleOnChangeValue;
+            redScale.ValueChanged += RedScaleOnChangeValue;
             var greenSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var greenScale = new HScale(greenSlider);
-            greenScale.ChangeValue += GreenScaleOnChangeValue;
+            greenSlider.ValueChanged += GreenScaleOnChangeValue;
             var blueSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var blueScale = new HScale(blueSlider);
-            blueScale.ChangeValue += BlueScaleOnChangeValue;
+            blueScale.ValueChanged += BlueScaleOnChangeValue;
+            var alphaSlider = new Adjustment(0, 0, 255, 1, 15, 15);
+            var alphaScale = new HScale(alphaSlider);
+            alphaScale.ValueChanged += AlphaScaleOnChangeValue;
             backgroundSliders.Add(grayscaleOption);
             backgroundSliders.Add(invertOption);
             backgroundSliders.Add(redScale);
             backgroundSliders.Add(greenScale);
             backgroundSliders.Add(blueScale);
+            backgroundSliders.Add(alphaScale);
             hbox.Add(backgroundSliders);
             
             var vbox = new VPaned();
@@ -112,22 +115,22 @@ namespace SharperImage.Viewer
             ShowAll();
         }
 
-        private void RedScaleOnChangeValue(object o, ChangeValueArgs args)
+        private void RedScaleOnChangeValue(object o, EventArgs args)
         {
             MyImageArea.SetBackground((byte)((HScale)o).Value, null, null, null);
         }
         
-        private void GreenScaleOnChangeValue(object o, ChangeValueArgs args)
+        private void GreenScaleOnChangeValue(object o, EventArgs args)
         {
             MyImageArea.SetBackground(null, (byte)((HScale)o).Value, null, null);
         }
         
-        private void BlueScaleOnChangeValue(object o, ChangeValueArgs args)
+        private void BlueScaleOnChangeValue(object o, EventArgs args)
         {
             MyImageArea.SetBackground(null, null, (byte)((HScale)o).Value, null);
         }
         
-        private void AlphaScaleOnChangeValue(object o, ChangeValueArgs args)
+        private void AlphaScaleOnChangeValue(object o, EventArgs args)
         {
             MyImageArea.SetBackground(null, null, null, (byte)((HScale)o).Value);
         }
@@ -146,7 +149,7 @@ namespace SharperImage.Viewer
         {
             private readonly Image _image;
 
-            private Color _background = new Color { Red = 0, Green = 0, Blue = 0, Alpha = 255 };
+            public Color BackgroundColor = Color.Clear;
 
             public Action<EventMotion> MouseMoveAction { get; set; }
             private bool UseGrayscale { get; set; } = false;
@@ -165,10 +168,10 @@ namespace SharperImage.Viewer
             
             public void SetBackground(byte? red, byte? green, byte? blue, byte? alpha)
             {
-                _background.Red = red ?? _background.Red;
-                _background.Green = green ?? _background.Green;
-                _background.Blue = blue ?? _background.Blue;
-                _background.Alpha = alpha ?? _background.Alpha;
+                BackgroundColor.Red = red != null ? red.Value / 255.0 : BackgroundColor.Red;
+                BackgroundColor.Green = green != null ? green.Value / 255.0 : BackgroundColor.Green;
+                BackgroundColor.Blue = blue != null ? blue.Value / 255.0 : BackgroundColor.Blue;
+                BackgroundColor.Alpha = alpha != null ? alpha.Value / 255.0 : BackgroundColor.Alpha;
                 QueueDraw();
             }
 
@@ -193,13 +196,8 @@ namespace SharperImage.Viewer
                     
                 foreach (var pixel in pixels)
                 {
-                    //Console.WriteLine($"Pixel ({pixel.X}, {pixel.Y}) ({pixel.Color.Red}, {pixel.Color.Green}, {pixel.Color.Blue}, {pixel.Color.Alpha})");
-                    var alpha = pixel.Color.Alpha + (_background.Alpha * (255 - pixel.Color.Alpha) / 255);
-                    var red = (pixel.Color.Red * pixel.Color.Alpha + _background.Red * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
-                    var green = (pixel.Color.Green * pixel.Color.Alpha + _background.Green * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
-                    var blue = (pixel.Color.Blue * pixel.Color.Alpha + _background.Blue * _background.Alpha * (255 - pixel.Color.Alpha) / 255) / alpha;
-                    
-                    c.SetSourceRGBA(red / 255.0, green / 255.0, blue / 255.0, alpha / 255.0);
+                    var composite = BackgroundColor.Composite(pixel.Color);
+                    c.SetSourceRGBA(composite.Red, composite.Green, composite.Blue, composite.Alpha);
                     c.Rectangle(pixel.X, pixel.Y, 1, 1);
                     c.Fill();
                 }

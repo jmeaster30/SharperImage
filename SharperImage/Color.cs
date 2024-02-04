@@ -2,12 +2,25 @@ namespace SharperImage;
 
 public struct Color
 {
-    public byte Red { get; set; }
-    public byte Green { get; set; }
-    public byte Blue { get; set; }
-    public byte Alpha { get; set; } = 255;
+    public double Red { get; set; }
+    public double Green { get; set; }
+    public double Blue { get; set; }
+    public double Alpha { get; set; } = 1.0;
+
+    public byte RedByte => (byte)(Red * 255.0);
+    public byte GreenByte => (byte)(Green * 255.0);
+    public byte BlueByte => (byte)(Blue * 255.0);
+    public byte AlphaByte => (byte)(Alpha * 255.0);
     
     public Color(byte red, byte green, byte blue, byte alpha)
+    {
+        Red = red / 255.0;
+        Green = green / 255.0;
+        Blue = blue / 255.0;
+        Alpha = alpha / 255.0;
+    }
+    
+    public Color(double red, double green, double blue, double alpha)
     {
         Red = red;
         Green = green;
@@ -16,42 +29,47 @@ public struct Color
     }
 
     public double Hue() {
-        var xmax = Math.Max(Math.Max(Red, Green), Blue) / 255.0;
-        var xmin = Math.Min(Math.Min(Red, Green), Blue) / 255.0;
+        var xmax = Math.Max(Math.Max(Red, Green), Blue);
+        var xmin = Math.Min(Math.Min(Red, Green), Blue);
         var chroma = xmax - xmin;
         if (chroma == 0) return 0;
-        if (xmax == Red / 255.0) return 60 * ((Green / 255.0 - Blue / 255.0) / chroma % 6);
-        if (xmax == Green / 255.0) return 60 * ((Blue / 255.0 - Red / 255.0) / chroma + 2);
+        if (xmax == Red) return 60 * ((Green - Blue) / chroma % 6);
+        if (xmax == Green) return 60 * ((Blue - Red) / chroma + 2);
         // xmax == blue
-        return 60 * ((Red / 255.0 - Green / 255.0) / chroma + 4);
+        return 60 * ((Red - Green) / chroma + 4);
     }
     
     public double Saturation()
     {
         if (Luminosity() is 0 or 1) return 0;
-        var xmax = Math.Max(Math.Max(Red, Green), Blue) / 255.0;
-        var xmin = Math.Min(Math.Min(Red, Green), Blue) / 255.0;
+        var xmax = Math.Max(Math.Max(Red, Green), Blue);
+        var xmin = Math.Min(Math.Min(Red, Green), Blue);
         var chroma = xmax - xmin;
         return chroma / (1 - Math.Abs(2 * xmax - chroma - 1));
     }
     
-    public double Luminosity() {
-        var xmax = Math.Max(Math.Max(Red, Green), Blue) / 255.0;
-        var xmin = Math.Min(Math.Min(Red, Green), Blue) / 255.0;
+    public double Luminosity()
+    {
+        var xmax = Math.Max(Math.Max(Red, Green), Blue);
+        var xmin = Math.Min(Math.Min(Red, Green), Blue);
         return (xmax + xmin) / 2.0;
     }
 
     public byte[] Cmyk()
     {
-        var rPrime = Red / 255.0;
-        var gPrime = Green / 255.0;
-        var bPrime = Blue / 255.0;
+        var rPrime = Red;
+        var gPrime = Green;
+        var bPrime = Blue;
         var k = 1 - Math.Max(rPrime, Math.Max(gPrime, bPrime));
         var c = (1 - rPrime - k) / (1 - k);
         var m = (1 - gPrime - k) / (1 - k);
         var y = (1 - bPrime - k) / (1 - k);
         return new[] {(byte) (c * 255), (byte) (m * 255), (byte) (y * 255), (byte) (k * 255)};
     }
+
+    public byte[] Rgba() => new[]
+        { (byte)(Red * 255.0), (byte)(Green * 255.0), (byte)(Blue * 255.0), (byte)(Alpha * 255.0) };
+
 
     public static Color HSLA(double hue, double saturation, double luminosity, double alpha)
     {
@@ -79,8 +97,8 @@ public struct Color
     public static bool operator !=(Color lhs, Color rhs) => !(lhs == rhs);
 
     public static Color Clear = new(0, 0, 0, 0);
-    public static Color Black = new(0, 0, 0, 255);
-    public static Color White = new(255, 255, 255, 255);
+    public static Color Black = new(0, 0, 0, 1.0);
+    public static Color White = new(1.0, 1.0, 1.0, 1.0);
 
     public Color Grayscale()
     {
@@ -90,69 +108,104 @@ public struct Color
 
     public Color Invert()
     {
-        return Transform(x => 255 - x);
+        return Transform(x => 1 - x);
     }
     
-    public Color Combine(Color other, Func<byte, byte, int> func)
+    public Color Combine(Color other, Func<double, double, double> func)
     {
         return new Color(
-            (byte)func(Red, other.Red), 
-            (byte)func(Green, other.Green), 
-            (byte)func(Blue, other.Blue), 
-            (byte)func(Alpha, other.Alpha));
-    }
-
-    public Color TransformWithAlpha(Func<byte, int> func)
-    {
-        return new Color(
-            (byte)func(Red), 
-            (byte)func(Green), 
-            (byte)func(Blue), 
-            (byte)func(Alpha));
-    }
-    
-    public Color Transform(Func<byte, int> func)
-    {
-        return new Color(
-            (byte)func(Red), 
-            (byte)func(Green), 
-            (byte)func(Blue), 
+            func(Red, other.Red), 
+            func(Green, other.Green), 
+            func(Blue, other.Blue), 
             Alpha);
     }
     
+    public Color CombineByte(Color other, Func<byte, byte, byte> func)
+    {
+        return new Color(
+            func(RedByte, other.RedByte), 
+            func(GreenByte, other.GreenByte), 
+            func(BlueByte, other.BlueByte), 
+            func(AlphaByte, other.AlphaByte));
+    }
+
+    public Color TransformWithAlpha(Func<double, double> func)
+    {
+        return new Color(
+            func(Red), 
+            func(Green), 
+            func(Blue), 
+            func(Alpha));
+    }
+    
+    public Color Transform(Func<double, double> func)
+    {
+        return new Color(
+            func(Red), 
+            func(Green), 
+            func(Blue), 
+            Alpha);
+    }
+
+    public Color Composite(Color other)
+    {
+        var alpha = other.Alpha + Alpha * (1 - other.Alpha);
+        var red = (other.Red * other.Alpha + Red * Alpha * (1 - other.Alpha)) / alpha;
+        var green = (other.Green * other.Alpha + Green * Alpha * (1 - other.Alpha)) / alpha;
+        var blue = (other.Blue * other.Alpha + Blue * Alpha * (1 - other.Alpha)) / alpha;
+        return new Color(red, green, blue, alpha);
+    }
+    
     public Color Add(Color other) => Combine(other, (a, b) => a + b);
+
+    public Color And(Color other) => CombineByte(other, (a, b) => (byte)(a & b));
+
+    public Color ChannelDissolve(Color other) => Combine(other, (a, b) =>
+    {
+        var rnd = new Random();
+        return rnd.NextDouble() < 0.5 ? a : b;
+    });
     
     public Color ColorBlend(Color other) => HSLA(other.Hue(), other.Saturation(), Luminosity(), Alpha);
     
-    public Color ColorBurn(Color other) => Combine(other, (a, b) => 255 - (255 - a) / b);
+    public Color ColorBurn(Color other) => Combine(other, (a, b) => 1 - (1 - a) / b);
 
-    public Color ColorDodge(Color other) => Combine(other, (a, b) => a / (255 - b));
+    public Color ColorDodge(Color other) => Combine(other, (a, b) => a / (1 - b));
 
-    public Color Darken(Color other) => Combine(other, (a, b) => a < b ? a : b);
+    public Color Darken(Color other) => Combine(other, (a, b) => Math.Min(a, b));
     
     public Color Difference(Color other) => Combine(other, (a, b) => Math.Abs(a - b));
 
+    public Color Dissolve(Color other)
+    {
+        var rnd = new Random();
+        return rnd.NextDouble() < 0.5 ? this : other;
+    }
+
+    public Color Divide(Color other) => Combine(other, (a, b) => a / b);
+
     public Color Exclusion(Color other) => Combine(other, (a, b) => a + b - 2 * a * b);
 
-    public Color Hue(Color other) => HSLA(other.Hue(), Saturation(), Luminosity(), Alpha / 255.0);
+    public Color HardLight(Color other) => Combine(other, (a, b) => b < 0.5 ? 2 * a * b : 1 - 2 * (1 - a) * (1 - b));
     
-    public Color Lighten(Color other) => Combine(other, (a, b) => a > b ? a : b);
+    public Color Hue(Color other) => HSLA(other.Hue(), Saturation(), Luminosity(), Alpha);
+    
+    public Color Lighten(Color other) => Combine(other, (a, b) => Math.Max(a, b));
+
+    public Color LinearBurn(Color other) => Combine(other, (a, b) => 1 - (1 - a + (1 - b)));
     
     public Color Luminosity(Color other) => HSLA(Hue(), Saturation(), other.Luminosity(), Alpha);
 
     public Color Multiply(Color other) => Combine(other, (a, b) => a * b);
+    
+    public Color Nand(Color other) => CombineByte(other, (a, b) => (byte)~(a & b));
 
-    public Color Normal(Color other)
-    {
-        var alpha = Alpha + other.Alpha * (255 - Alpha) / 255;
-        var red = (Red * Alpha + other.Red * other.Alpha * (255 - Alpha) / 255) / alpha;
-        var green = (Green * Alpha + other.Green * other.Alpha * (255 - Alpha) / 255) / alpha;
-        var blue = (Blue * Alpha + other.Blue * other.Alpha * (255 - Alpha) / 255) / alpha;
-        return new Color((byte)red, (byte)green, (byte)blue, (byte)alpha);
-    }
+    public Color Normal(Color other) => Composite(other);
+    
+    public Color Or(Color other) => CombineByte(other, (a, b) => (byte)(a | b));
 
     public Color Overlay(Color other) =>
-        Combine(other, (a, b) => a < 255 / 2 ? 2 * a * b : 255 - 2 * (255 - a) * (255 - b));
+        Combine(other, (a, b) => a < 0.5 ? 2 * a * b : 1 - 2 * (1 - a) * (1 - b));
 
     public Color PlusDarker(Color other) => Darken(other).Add(Multiply(other));
     
@@ -160,10 +213,12 @@ public struct Color
 
     public Color Saturation(Color other) => HSLA(Hue(), other.Saturation(), Luminosity(), Alpha);
     
-    public Color Screen(Color other) => Combine(other, (a, b) => 255 - (255 - a) * (255 - b));
+    public Color Screen(Color other) => Combine(other, (a, b) => 1 - (1 - a) * (1 - b));
 
     public Color SoftLight(Color other) => Combine(other,
-        (a, b) => b < 255 / 2 ? 2 * a * b + a * a * (255 - 2 * b) : (int)(Math.Sqrt(a) * (2 * b - 255)) + 2 * a * (255 - b));
+        (a, b) => b < 0.5 ? 2 * a * b + a * a * (1 - 2 * b) : Math.Sqrt(a) * (2 * b - 1) + 2 * a * (1 - b));
 
     public Color Subtract(Color other) => Combine(other, (a, b) => a - b);
+    
+    public Color Xor(Color other) => CombineByte(other, (a, b) => (byte)(a ^ b));
 }

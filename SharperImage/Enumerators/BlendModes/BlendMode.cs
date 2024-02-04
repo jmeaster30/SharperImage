@@ -3,11 +3,15 @@ namespace SharperImage.Enumerators.BlendModes;
 public enum BlendMode
 {
     ADD,
+    AND,
+    CHANNEL_DISSOLVE,
     COLOR,
     COLOR_BURN,
     COLOR_DODGE,
     DARKEN,
     DIFFERENCE,
+    DISSOLVE,
+    DIVIDE,
     EXCLUSION,
     HARD_LIGHT,
     HUE,
@@ -15,7 +19,9 @@ public enum BlendMode
     LINEAR_BURN,
     LUMINOSITY,
     MULTIPLY,
+    NAND,
     NORMAL,
+    OR,
     OVERLAY,
     PLUS_DARKER,
     PLUS_LIGHTER,
@@ -23,4 +29,5 @@ public enum BlendMode
     SCREEN,
     SOFT_LIGHT,
     SUBTRACT,
+    XOR
 }
