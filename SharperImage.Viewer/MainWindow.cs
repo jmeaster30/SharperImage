@@ -110,22 +110,22 @@ namespace SharperImage.Viewer
 
         private void RedScaleOnChangeValue(object o, EventArgs args)
         {
-            _myImageArea.SetBackground((byte)((HScale)o).Value, null, null, null);
+            _myImageArea.SetBackground((byte)((Adjustment)o).Value, null, null, null);
         }
         
         private void GreenScaleOnChangeValue(object o, EventArgs args)
         {
-            _myImageArea.SetBackground(null, (byte)((HScale)o).Value, null, null);
+            _myImageArea.SetBackground(null, (byte)((Adjustment)o).Value, null, null);
         }
         
         private void BlueScaleOnChangeValue(object o, EventArgs args)
         {
-            _myImageArea.SetBackground(null, null, (byte)((HScale)o).Value, null);
+            _myImageArea.SetBackground(null, null, (byte)((Adjustment)o).Value, null);
         }
         
         private void AlphaScaleOnChangeValue(object o, EventArgs args)
         {
-            _myImageArea.SetBackground(null, null, null, (byte)((HScale)o).Value);
+            _myImageArea.SetBackground(null, null, null, (byte)((Adjustment)o).Value);
         }
         
         private void GrayscaleOnToggle(object o, EventArgs args)
