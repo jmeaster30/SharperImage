@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace SharperImage.Enumerators.BlendModes;
+namespace SharperImage.Enumerators;
 
 public class BlendModeEnumerable : IPixelEnumerable
 {

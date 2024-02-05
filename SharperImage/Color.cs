@@ -96,6 +96,17 @@ public struct Color
     public static bool operator ==(Color lhs, Color rhs) => lhs.Equals(rhs);
     public static bool operator !=(Color lhs, Color rhs) => !(lhs == rhs);
 
+    public static Color operator +(Color lhs, Color rhs) => new(
+        lhs.Red + rhs.Red, lhs.Green + rhs.Green,
+        lhs.Blue + rhs.Blue, lhs.Alpha + rhs.Alpha);
+    public static Color operator -(Color lhs, Color rhs) => new(
+        lhs.Red - rhs.Red, lhs.Green - rhs.Green,
+        lhs.Blue - rhs.Blue, lhs.Alpha - rhs.Alpha);
+    public static Color operator /(Color lhs, double rhs) =>
+        new(lhs.Red / rhs, lhs.Green / rhs, lhs.Blue / rhs, lhs.Alpha / rhs);
+    public static Color operator *(Color lhs, double rhs) =>
+        new(lhs.Red * rhs, lhs.Green * rhs, lhs.Blue * rhs, lhs.Alpha * rhs);
+    
     public static Color Clear = new(0, 0, 0, 0);
     public static Color Black = new(0, 0, 0, 1.0);
     public static Color White = new(1.0, 1.0, 1.0, 1.0);

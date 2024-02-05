@@ -3,7 +3,7 @@ using Cairo;
 using Gdk;
 using Gtk;
 using SharperImage.Enumerators;
-using SharperImage.Filters;
+using SharperImage.Filters.Colors;
 using SharperImage.Formats;
 using Application = Gtk.Application;
 using EventMotion = Gdk.EventMotion;

@@ -1,4 +1,4 @@
-namespace SharperImage.Enumerators.BlendModes;
+namespace SharperImage.Filters.BlendModes;
 
 public enum BlendMode
 {

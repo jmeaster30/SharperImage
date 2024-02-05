@@ -1,6 +1,3 @@
-using SharperImage.Enumerators.BlendModes;
-using SharperImage.Formats;
-
 namespace SharperImage.Enumerators;
 
 public static class ImageExtensions

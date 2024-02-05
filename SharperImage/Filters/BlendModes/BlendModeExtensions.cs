@@ -1,5 +1,4 @@
 using SharperImage.Enumerators;
-using SharperImage.Enumerators.BlendModes;
 
 namespace SharperImage.Filters.BlendModes;
 
