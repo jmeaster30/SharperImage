@@ -1,19 +1,19 @@
 using System.Collections;
 
-namespace SharperImage.Enumerators;
+namespace SharperImage.Enumerators.Transform;
 
-public class ResizeEnumerable : IPixelEnumerable
+public class CropEnumerable : IPixelEnumerable
 {
-    private readonly ResizeEnumerator _resizeEnumerator;
+    private readonly CropEnumerator _cropEnumerator;
 
-    public ResizeEnumerable(IPixelEnumerable internalEnumerable, uint newWidth, uint newHeight)
+    public CropEnumerable(IPixelEnumerable internalEnumerable, uint newWidth, uint newHeight)
     {
-        _resizeEnumerator = new ResizeEnumerator(internalEnumerable, newWidth, newHeight);
+        _cropEnumerator = new CropEnumerator(internalEnumerable, newWidth, newHeight);
     }
     
     public IEnumerator<Pixel> GetEnumerator()
     {
-        return _resizeEnumerator;
+        return _cropEnumerator;
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -21,31 +21,31 @@ public class ResizeEnumerable : IPixelEnumerable
         return GetEnumerator();
     }
 
-    public int Count => _resizeEnumerator.Count;
+    public int Count => _cropEnumerator.Count;
 
-    public uint GetWidth() => _resizeEnumerator.Width;
+    public uint GetWidth() => _cropEnumerator.GetWidth();
 
-    public uint GetHeight() => _resizeEnumerator.Height;
+    public uint GetHeight() => _cropEnumerator.GetHeight();
 
     public Pixel this[int index] {
         get
         {
-            _resizeEnumerator.SetIndex((uint)index);
-            return _resizeEnumerator.Current;
+            _cropEnumerator.SetIndex((uint)index);
+            return _cropEnumerator.Current;
         }
     }
 
     public Pixel this[uint x, uint y] {
         get
         {
-            _resizeEnumerator.SetX(x);
-            _resizeEnumerator.SetY(y);
-            return _resizeEnumerator.Current;
+            _cropEnumerator.SetX(x);
+            _cropEnumerator.SetY(y);
+            return _cropEnumerator.Current;
         }
     }
 }
 
-public class ResizeEnumerator : IEnumerator<Pixel>
+public class CropEnumerator : IPixelEnumerator
 {
     private readonly IPixelEnumerable _internalEnumerator;
     private readonly uint _newWidth;
@@ -53,7 +53,7 @@ public class ResizeEnumerator : IEnumerator<Pixel>
     private uint _x;
     private uint _y;
     
-    public ResizeEnumerator(IPixelEnumerable internalEnumerator, uint newWidth, uint newHeight)
+    public CropEnumerator(IPixelEnumerable internalEnumerator, uint newWidth, uint newHeight)
     {
         _internalEnumerator = internalEnumerator;
         _newWidth = newWidth;
@@ -89,12 +89,13 @@ public class ResizeEnumerator : IEnumerator<Pixel>
     public void Dispose()
     {
         _internalEnumerator.GetEnumerator().Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public int Count => (int)_newWidth * (int)_newHeight;
 
-    public uint Width => _newWidth;
-    public uint Height => _newHeight;
+    public uint GetWidth() => _newWidth;
+    public uint GetHeight() => _newHeight;
     
     public void SetIndex(uint index)
     {

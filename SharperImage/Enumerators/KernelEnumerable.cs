@@ -1,14 +1,13 @@
 using System.Collections;
 
-using MyLib.Math;
-
 namespace SharperImage.Enumerators;
 
 public enum KernelEdgeMode
 {
     SHRINK,
     WRAP,
-    CLAMP,
+    EXTEND,
+    MIRROR,
     BLACK,
     CLEAR,
 }
@@ -17,9 +16,8 @@ public class KernelEnumerable : IPixelEnumerable
 {
     private KernelEnumerator _enumerator;
     
-    // TODO add edge mode
     public KernelEnumerable(IPixelEnumerable enumerable, uint kernelWidth, uint kernelHeight,
-        Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode = KernelEdgeMode.CLAMP)
+        Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode = KernelEdgeMode.EXTEND)
     {
         var kernelOffsetX = (uint)System.Math.Floor(kernelWidth / 2.0);
         var kernelOffsetY = (uint)System.Math.Floor(kernelHeight / 2.0);
@@ -27,7 +25,7 @@ public class KernelEnumerable : IPixelEnumerable
     }
 
     public KernelEnumerable(IPixelEnumerable enumerable, uint kernelWidth, uint kernelHeight,
-        uint kernelOffsetX, uint kernelOffsetY, Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode = KernelEdgeMode.CLAMP)
+        uint kernelOffsetX, uint kernelOffsetY, Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode = KernelEdgeMode.EXTEND)
     {
         _enumerator = new KernelEnumerator(enumerable, kernelWidth, kernelHeight, kernelOffsetX, kernelOffsetY, kernelFunction, edgeMode);
     }
@@ -43,8 +41,8 @@ public class KernelEnumerable : IPixelEnumerable
     }
 
     public int Count => _enumerator.Count;
-    public uint GetWidth() => _enumerator.Width();
-    public uint GetHeight() => _enumerator.Height();
+    public uint GetWidth() => _enumerator.GetWidth();
+    public uint GetHeight() => _enumerator.GetHeight();
 
     public Pixel this[int index]
     {
@@ -66,7 +64,7 @@ public class KernelEnumerable : IPixelEnumerable
     }
 }
 
-public class KernelEnumerator : IEnumerator<Pixel>
+public class KernelEnumerator : IPixelEnumerator
 {
     private readonly IPixelEnumerable _enumerable;
     private readonly Func<Pixel[,], Color> _kernelFunction;
@@ -77,8 +75,7 @@ public class KernelEnumerator : IEnumerator<Pixel>
     private readonly KernelEdgeMode _mode;
     private readonly uint _width;
     private readonly uint _height;
-
-
+    
     private uint _x;
     private uint _y;
 
@@ -135,16 +132,16 @@ public class KernelEnumerator : IEnumerator<Pixel>
             {
                 for (var ky = 0; ky < _kernelHeight; ky++)
                 {
-                    var adjKx = adjX - _kernelOffsetX + kx;
-                    var adjKy = adjY - _kernelOffsetY + ky;
-
+                    var adjKx = (long)adjX - _kernelOffsetX + kx;
+                    var adjKy = (long)adjY - _kernelOffsetY + ky;
+                    
                     kernel[kx, ky] = _mode switch
                     {
                         KernelEdgeMode.SHRINK => _enumerable[(uint)adjKx, (uint)adjKy],
                         KernelEdgeMode.WRAP => _enumerable[(uint)((adjKx + _enumerable.GetWidth()) % _enumerable.GetWidth()), (uint)((adjKy + _enumerable.GetHeight()) % _enumerable.GetHeight())],
-                        KernelEdgeMode.CLAMP => _enumerable[Clamp(adjKx, _enumerable.GetWidth()), Clamp(adjKy, _enumerable.GetHeight())],
+                        KernelEdgeMode.EXTEND => _enumerable[Clamp(adjKx, _enumerable.GetWidth() - 1), Clamp(adjKy, _enumerable.GetHeight() - 1)],
                         KernelEdgeMode.BLACK => GetColorPixel(adjKx, adjKy, Color.Black),
-                        KernelEdgeMode.CLEAR => GetColorPixel(adjKx, adjKy, Color.Black),
+                        KernelEdgeMode.CLEAR => GetColorPixel(adjKx, adjKy, Color.Clear),
                         _ => throw new ArgumentOutOfRangeException()
                     };
                 }
@@ -158,7 +155,7 @@ public class KernelEnumerator : IEnumerator<Pixel>
     {
         if (adjKx < 0 || adjKx >= _enumerable.GetWidth() || adjKy < 0 || adjKy >= _enumerable.GetHeight())
         {
-            return new Pixel(Clamp(adjKx, _enumerable.GetWidth()), Clamp(adjKy, _enumerable.GetHeight()), color);
+            return new Pixel(Clamp(adjKx, _enumerable.GetWidth() - 1), Clamp(adjKy, _enumerable.GetHeight() - 1), color);
         }
 
         return _enumerable[(uint)adjKx, (uint)adjKy];
@@ -168,8 +165,8 @@ public class KernelEnumerator : IEnumerator<Pixel>
     {
         if (adjK < 0)
             return 0;
-        if (adjK >= max)
-            return max - 1;
+        if (adjK > max)
+            return max;
         return (uint)adjK;
     }
 
@@ -182,8 +179,8 @@ public class KernelEnumerator : IEnumerator<Pixel>
     }
 
     public int Count => (int)(_width * _height);
-    public uint Width() => _width;
-    public uint Height() => _height;
+    public uint GetWidth() => _width;
+    public uint GetHeight() => _height;
 
     public void SetIndex(uint index)
     {

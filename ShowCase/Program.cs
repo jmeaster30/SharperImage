@@ -1,8 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using SharperImage.Enumerators;
-using SharperImage.Filters.BlendModes;
-using SharperImage.Filters.Blurs;
 using SharperImage.Formats;
 using SharperImage.Viewer;
 
@@ -19,11 +17,11 @@ Console.WriteLine($"Decoded image in {loadWatchElapsedMs / 1000.0} sec");
 
 var renderWatch = System.Diagnostics.Stopwatch.StartNew();
 
-var result = kodimImage.BoxBlur(20, 20);//(kodimImage, diceImage).Blend(BlendMode.XOR).Blend(diceImage, BlendMode.DIVIDE);
-var final = result.ToImage();
+var result = kodimImage
+    .ToImage();
 
 renderWatch.Stop();
 var renderWatchElapsedMs = renderWatch.ElapsedMilliseconds;
 Console.WriteLine($"Rendered image in {renderWatchElapsedMs / 1000.0} sec");
 
-Viewer.Open(final);
+Viewer.Open(result);

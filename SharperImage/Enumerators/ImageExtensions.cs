@@ -1,3 +1,5 @@
+using SharperImage.Enumerators.Transform;
+
 namespace SharperImage.Enumerators;
 
 public static class ImageExtensions
@@ -24,10 +26,6 @@ public static class ImageExtensions
         return new PixelFilterEnumerable(enumerable, pixelFilter);
     }
 
-    public static IPixelEnumerable Resize(this IPixelEnumerable enumerable, uint newWidth, uint newHeight)
-    {
-        return new ResizeEnumerable(enumerable, newWidth, newHeight);
-    }
 
     public static IPixelEnumerable Blend(this IPixelEnumerable a, IPixelEnumerable b,
         Func<Color, Color, Color> blendFunction)
