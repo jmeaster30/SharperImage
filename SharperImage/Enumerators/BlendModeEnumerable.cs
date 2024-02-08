@@ -1,4 +1,5 @@
 using System.Collections;
+using MyLib.Enumerables;
 
 namespace SharperImage.Enumerators;
 
@@ -49,8 +50,7 @@ public class BlendModeEnumerator : IPixelEnumerator
 {
     private readonly IPixelEnumerable _a;
     private readonly IPixelEnumerable _b;
-    private uint _x;
-    private uint _y;
+    private readonly Index2dEnumerator _index2dEnumerator;
     private readonly uint _width;
     private readonly uint _height;
     private readonly Func<Color, Color, Color> _blendFunction;
@@ -60,37 +60,29 @@ public class BlendModeEnumerator : IPixelEnumerator
         _blendFunction = blendFunction;
         _a = a;
         _b = b;
-        _x = 0;
-        _y = 0;
         _width = a.GetWidth() > b.GetWidth() ? a.GetWidth() : b.GetWidth();
         _height = a.GetHeight() > b.GetHeight() ? a.GetHeight() : b.GetHeight();
+        _index2dEnumerator = new Index2dEnumerator(_width, _height, Ordering.Row);
     }
 
     public bool MoveNext()
     {
-        _x += 1;
-        if (_x >= _width)
-        {
-            _x = 0;
-            _y += 1;
-        }
-
-        return _y < _height;
+        return _index2dEnumerator.MoveNext();
     }
 
     public void Reset()
     {
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator.Reset();
     }
 
     public Pixel Current
     {
         get
         {
-            var a = _x < _a.GetWidth() && _y < _a.GetHeight() ? _a[_x, _y].Color : Color.Clear;
-            var b = _x < _b.GetWidth() && _y < _b.GetHeight() ? _b[_x, _y].Color : Color.Clear;
-            return new Pixel(_x, _y, _blendFunction(a, b));
+            var (x, y) = _index2dEnumerator.Current;
+            var a = x < _a.GetWidth() && y < _a.GetHeight() ? _a[x, y].Color : Color.Clear;
+            var b = x < _b.GetWidth() && y < _b.GetHeight() ? _b[x, y].Color : Color.Clear;
+            return new Pixel(x, y, _blendFunction(a, b));
         }
     }
 
@@ -103,21 +95,9 @@ public class BlendModeEnumerator : IPixelEnumerator
         GC.SuppressFinalize(this);
     }
 
-    public void SetIndex(uint index)
-    {
-        _x = index % _width;
-        _y = index / _height;
-    }
-
-    public void SetX(uint x)
-    {
-        _x = x;
-    }
-
-    public void SetY(uint y)
-    {
-        _y = y;
-    }
+    public void SetIndex(uint index) => _index2dEnumerator.SetIndex(index);
+    public void SetX(uint x) => _index2dEnumerator.SetX(x);
+    public void SetY(uint y) => _index2dEnumerator.SetY(y);
 
     public int Count => (int)(_width * _height);
     public uint GetWidth() => _width;

@@ -4,9 +4,9 @@ namespace SharperImage.Enumerators;
 
 public static class ImageExtensions
 {
-    public static ImageDataEnumerable ToPixelEnumerable(this Image image, PixelOrdering ordering = PixelOrdering.ROW)
+    public static ImageDataEnumerable ToPixelEnumerable(this Image image)
     {
-        return new ImageDataEnumerable(image, ordering);
+        return new ImageDataEnumerable(image);
     }
 
     public static IPixelEnumerable ConditionalApply(this IPixelEnumerable enumerable, bool condition,

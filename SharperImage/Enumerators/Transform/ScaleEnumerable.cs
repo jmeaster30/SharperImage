@@ -1,4 +1,6 @@
 using System.Collections;
+using MyLib.Enumerables;
+using MyLib.Math;
 
 namespace SharperImage.Enumerators.Transform;
 
@@ -51,13 +53,11 @@ public class ScaleEnumerable : IPixelEnumerable
 
 public class ScaleEnumerator : IPixelEnumerator
 {
+    private readonly Index2dEnumerator _index2dEnumerator;
     private readonly IPixelEnumerable _enumerable;
     private readonly uint _newWidth;
     private readonly uint _newHeight;
     private readonly ScaleMode _mode;
-
-    private uint _x;
-    private uint _y;
     
     public ScaleEnumerator(IPixelEnumerable enumerable, uint newWidth, uint newHeight, ScaleMode mode)
     {
@@ -65,25 +65,17 @@ public class ScaleEnumerator : IPixelEnumerator
         _newWidth = newWidth;
         _newHeight = newHeight;
         _mode = mode;
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator = new Index2dEnumerator(newWidth, newHeight, Ordering.Row);
     }
     
     public bool MoveNext()
     {
-        _x += 1;
-        if (_x >= _newWidth)
-        {
-            _x = 0;
-            _y += 1;
-        }
-        return _y < _newHeight;
+        return _index2dEnumerator.MoveNext();
     }
 
     public void Reset()
     {
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator.Reset();
     }
 
     public Pixel Current
@@ -102,9 +94,10 @@ public class ScaleEnumerator : IPixelEnumerator
 
     private Pixel nearestNeighbor()
     {
-        var adjx = (uint)Math.Round((_enumerable.GetWidth() - 1) * _x / (double)_newWidth);
-        var adjy = (uint)Math.Round((_enumerable.GetHeight() - 1) * _y / (double)_newHeight);
-        return new Pixel(_x, _y, _enumerable[adjx, adjy].Color);
+        var (x, y) = _index2dEnumerator.Current;
+        var adjx = (uint)((_enumerable.GetWidth() - 1) * x / (double)_newWidth).Round();
+        var adjy = (uint)((_enumerable.GetHeight() - 1) * y / (double)_newHeight).Round();
+        return new Pixel(x, y, _enumerable[adjx, adjy].Color);
     }
     
     private Pixel bilinear()
@@ -122,6 +115,7 @@ public class ScaleEnumerator : IPixelEnumerator
 
     public void Dispose()
     {
+        _index2dEnumerator.Dispose();
         _enumerable.GetEnumerator().Dispose();
         GC.SuppressFinalize(this);
     }
@@ -131,11 +125,7 @@ public class ScaleEnumerator : IPixelEnumerator
     public uint GetWidth() => _newWidth;
     public uint GetHeight() => _newHeight;
 
-    public void SetIndex(uint index)
-    {
-        _x = index % _newWidth;
-        _y = index / _newHeight;
-    }
-    public void SetX(uint x) => _x = x;
-    public void SetY(uint y) => _y = y;
+    public void SetIndex(uint index) => _index2dEnumerator.SetIndex(index);
+    public void SetX(uint x) => _index2dEnumerator.SetX(x);
+    public void SetY(uint y) => _index2dEnumerator.SetY(y);
 }

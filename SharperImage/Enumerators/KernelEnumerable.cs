@@ -1,4 +1,6 @@
 using System.Collections;
+using MyLib.Enumerables;
+using MyLib.Math;
 
 namespace SharperImage.Enumerators;
 
@@ -19,8 +21,8 @@ public class KernelEnumerable : IPixelEnumerable
     public KernelEnumerable(IPixelEnumerable enumerable, uint kernelWidth, uint kernelHeight,
         Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode = KernelEdgeMode.EXTEND)
     {
-        var kernelOffsetX = (uint)System.Math.Floor(kernelWidth / 2.0);
-        var kernelOffsetY = (uint)System.Math.Floor(kernelHeight / 2.0);
+        var kernelOffsetX = (uint)(kernelWidth / 2.0).Floor();
+        var kernelOffsetY = (uint)(kernelHeight / 2.0).Floor();
         _enumerator = new KernelEnumerator(enumerable, kernelWidth, kernelHeight, kernelOffsetX, kernelOffsetY, kernelFunction, edgeMode);
     }
 
@@ -66,6 +68,7 @@ public class KernelEnumerable : IPixelEnumerable
 
 public class KernelEnumerator : IPixelEnumerator
 {
+    private readonly Index2dEnumerator _index2dEnumerator;
     private readonly IPixelEnumerable _enumerable;
     private readonly Func<Pixel[,], Color> _kernelFunction;
     private readonly uint _kernelWidth;
@@ -75,9 +78,6 @@ public class KernelEnumerator : IPixelEnumerator
     private readonly KernelEdgeMode _mode;
     private readonly uint _width;
     private readonly uint _height;
-    
-    private uint _x;
-    private uint _y;
 
     public KernelEnumerator(IPixelEnumerable enumerable, uint kernelWidth, uint kernelHeight,
         uint kernelOffsetX, uint kernelOffsetY, Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode)
@@ -99,32 +99,26 @@ public class KernelEnumerator : IPixelEnumerator
             KernelEdgeMode.SHRINK => _kernelHeight - 1,
             _ => 0
         };
+        _index2dEnumerator = new Index2dEnumerator(_width, _height, Ordering.Row);
     }
     
     public bool MoveNext()
     {
-        _x += 1;
-        if (_x >= _width)
-        {
-            _x = 0;
-            _y += 1;
-        }
-
-        return _y < _height;
+        return _index2dEnumerator.MoveNext();
     }
 
     public void Reset()
     {
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator.Reset();
     }
 
     public Pixel Current
     {
         get
         {
-            var adjX = _mode switch { KernelEdgeMode.SHRINK => _x + _kernelOffsetX, _ => _x };
-            var adjY = _mode switch { KernelEdgeMode.SHRINK => _y + _kernelOffsetY, _ => _y };
+            var (x, y) = _index2dEnumerator.Current;
+            var adjX = _mode switch { KernelEdgeMode.SHRINK => x + _kernelOffsetX, _ => x };
+            var adjY = _mode switch { KernelEdgeMode.SHRINK => y + _kernelOffsetY, _ => y };
 
             var kernel = new Pixel[_kernelWidth, _kernelHeight];
 
@@ -147,7 +141,7 @@ public class KernelEnumerator : IPixelEnumerator
                 }
             }
 
-            return new Pixel(_x, _y, _kernelFunction(kernel));
+            return new Pixel(x, y, _kernelFunction(kernel));
         }
     }
 
@@ -174,7 +168,8 @@ public class KernelEnumerator : IPixelEnumerator
 
     public void Dispose()
     {
-        
+        _index2dEnumerator.Dispose();
+        _enumerable.GetEnumerator().Dispose();
         GC.SuppressFinalize(this);
     }
 
@@ -182,19 +177,7 @@ public class KernelEnumerator : IPixelEnumerator
     public uint GetWidth() => _width;
     public uint GetHeight() => _height;
 
-    public void SetIndex(uint index)
-    {
-        _x = index % _width;
-        _y = index / _height;
-    }
-
-    public void SetX(uint x)
-    {
-        _x = x;
-    }
-
-    public void SetY(uint y)
-    {
-        _y = y;
-    }
+    public void SetIndex(uint index) => _index2dEnumerator.SetIndex(index);
+    public void SetX(uint x) => _index2dEnumerator.SetX(x);
+    public void SetY(uint y) => _index2dEnumerator.SetY(y);
 }

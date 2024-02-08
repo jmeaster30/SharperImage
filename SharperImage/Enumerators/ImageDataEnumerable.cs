@@ -1,22 +1,19 @@
 using System.Collections;
+using MyLib.Enumerables;
 
 namespace SharperImage.Enumerators;
 
 public class ImageDataEnumerable : IPixelEnumerable
 {
     private ImageDataEnumerator _imageDataEnumerator;
-    private Image _image;
     private uint _width;
     private uint _height;
-    private PixelOrdering _ordering;
 
-    public ImageDataEnumerable(Image image, PixelOrdering ordering)
+    public ImageDataEnumerable(Image image, Ordering ordering = Ordering.Row)
     {
         _imageDataEnumerator = new ImageDataEnumerator(image, ordering);
-        _image = image;
         _width = image.Width;
         _height = image.Height;
-        _ordering = ordering;
     }
     
     public IEnumerator<Pixel> GetEnumerator()
@@ -54,82 +51,41 @@ public class ImageDataEnumerable : IPixelEnumerable
 }
 
 
-public class ImageDataEnumerator : IEnumerator<Pixel>
+public class ImageDataEnumerator : IPixelEnumerator
 {
     private readonly Image _image;
-    private readonly PixelOrdering _ordering;
-    private uint _x;
-    private uint _y;
+    private readonly Index2dEnumerator _index2dEnumerator;
 
-    public ImageDataEnumerator(Image image, PixelOrdering ordering = PixelOrdering.ROW)
+    public ImageDataEnumerator(Image image, Ordering ordering)
     {
-        _x = 0;
-        _y = 0;
-        _ordering = ordering;
+        _index2dEnumerator = new Index2dEnumerator(image.Width, image.Height, ordering);
         _image = image;
     }
 
     public bool MoveNext()
     {
-        bool result = false;
-        switch (_ordering) 
-        {
-            case PixelOrdering.COLUMN:
-            {
-                _y += 1;
-                if (_y >= _image.Height)
-                {
-                    _y = 0;
-                    _x += 1;
-                }
-                result = _x < _image.Width;
-                break;
-            }
-            case PixelOrdering.ROW:
-            {
-                _x += 1;
-                if (_x >= _image.Width)
-                {
-                    _x = 0;
-                    _y += 1;
-                }
-                result = _y < _image.Height;
-                break;
-            }
-        }
-
-        return result;
+        return _index2dEnumerator.MoveNext();
     }
 
     public void Reset()
     {
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator.Reset();
     }
 
-    public Pixel Current => _image.PixelData[_x, _y];
+    public Pixel Current => _image.PixelData[_index2dEnumerator.Current.Item1, _index2dEnumerator.Current.Item2];
 
     object IEnumerator.Current => Current;
 
     public void Dispose()
     {
+        _index2dEnumerator.Dispose();
         GC.SuppressFinalize(this);
     }
 
-    public void SetIndex(uint index)
-    {
-        _x = _ordering switch
-        {
-            PixelOrdering.COLUMN => index / _image.Width,
-            PixelOrdering.ROW => index % _image.Width
-        };
-        _y = _ordering switch
-        {
-            PixelOrdering.COLUMN => index % _image.Height,
-            PixelOrdering.ROW => index / _image.Height
-        };
-    }
+    public uint GetWidth() => _image.Width;
+    public uint GetHeight() => _image.Height;
 
-    public void SetX(uint x) => _x = x;
-    public void SetY(uint y) => _y = y;
+    public void SetIndex(uint index) => _index2dEnumerator.SetIndex(index);
+    public void SetX(uint x) => _index2dEnumerator.SetX(x);
+    public void SetY(uint y) => _index2dEnumerator.SetY(y);
 }

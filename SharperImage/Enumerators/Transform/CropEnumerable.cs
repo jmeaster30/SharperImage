@@ -1,4 +1,5 @@
 using System.Collections;
+using MyLib.Enumerables;
 
 namespace SharperImage.Enumerators.Transform;
 
@@ -48,41 +49,38 @@ public class CropEnumerable : IPixelEnumerable
 public class CropEnumerator : IPixelEnumerator
 {
     private readonly IPixelEnumerable _internalEnumerator;
+    private readonly Index2dEnumerator _index2dEnumerator;
     private readonly uint _newWidth;
     private readonly uint _newHeight;
-    private uint _x;
-    private uint _y;
     
     public CropEnumerator(IPixelEnumerable internalEnumerator, uint newWidth, uint newHeight)
     {
         _internalEnumerator = internalEnumerator;
         _newWidth = newWidth;
         _newHeight = newHeight;
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator = new Index2dEnumerator(_newWidth, _newHeight, Ordering.Row);
     }
     
     public bool MoveNext()
     {
-        _x += 1;
-        if (_x >= _newWidth)
-        {
-            _x = 0;
-            _y += 1;
-        }
-        return _y < _newHeight;
+        return _index2dEnumerator.MoveNext();
     }
 
     public void Reset()
     {
-        _x = 0;
-        _y = 0;
+        _index2dEnumerator.Reset();
     }
 
-    public Pixel Current =>
-        _x < _internalEnumerator.GetWidth() && _y < _internalEnumerator.GetHeight()
-            ? _internalEnumerator[_x, _y]
-            : new Pixel(_x, _y, Color.Clear);
+    public Pixel Current
+    {
+        get
+        {
+            var (x, y) = _index2dEnumerator.Current;
+            return x < _internalEnumerator.GetWidth() && y < _internalEnumerator.GetHeight()
+                ? _internalEnumerator[x, y]
+                : new Pixel(x, y, Color.Clear);
+        }
+    }
 
     object IEnumerator.Current => Current;
 
@@ -96,12 +94,8 @@ public class CropEnumerator : IPixelEnumerator
 
     public uint GetWidth() => _newWidth;
     public uint GetHeight() => _newHeight;
-    
-    public void SetIndex(uint index)
-    {
-        _x = index % _newWidth;
-        _y = index / _newHeight;
-    }
-    public void SetX(uint x) => _x = x;
-    public void SetY(uint y) => _y = y;
+
+    public void SetIndex(uint index) => _index2dEnumerator.SetIndex(index);
+    public void SetX(uint x) => _index2dEnumerator.SetX(x);
+    public void SetY(uint y) => _index2dEnumerator.SetY(y);
 }
