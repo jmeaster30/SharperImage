@@ -19,10 +19,15 @@ Console.WriteLine($"Decoded image in {loadWatchElapsedMs / 1000.0} sec");
 
 var renderWatch = System.Diagnostics.Stopwatch.StartNew();
 
-var result = diceImage
-    .DrawRectangle(200, 200, 100, 100, new Color(1.0, 1.0, 1.0, 0.5))
-    .DrawLine(0, 0, 300, 300, Color.Black)
-    .ToImage();
+var enumerable = diceImage
+    .DrawRectangle(200, 200, 100, 100, new Color(1.0, 1.0, 1.0, 0.5));
+
+for (double a = 0; a < Math.PI / 2; a += 0.1)
+{
+    enumerable = enumerable.DrawLine(100, 100, 200, a, Color.White, 1);
+}
+    
+var result = enumerable.ToImage();
 
 renderWatch.Stop();
 var renderWatchElapsedMs = renderWatch.ElapsedMilliseconds;

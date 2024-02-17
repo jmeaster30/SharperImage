@@ -6,7 +6,7 @@ public class DrawLineEnumerable : IPixelEnumerable
 {
     private DrawLineEnumerator _drawLineEnumerator;
 
-    public DrawLineEnumerable(IPixelEnumerable baseEnumerable, uint x1, uint y1, uint x2, uint y2, Color color, double tolerance)
+    public DrawLineEnumerable(IPixelEnumerable baseEnumerable, int x1, int y1, int x2, int y2, Color color, double tolerance)
     {
         _drawLineEnumerator = new DrawLineEnumerator(baseEnumerable, x1, y1, x2, y2, color, tolerance);
     }
@@ -53,15 +53,15 @@ public class DrawLineEnumerable : IPixelEnumerable
 public class DrawLineEnumerator : IPixelEnumerator
 {
     private readonly IPixelEnumerator _baseEnumerator;
-    private readonly uint _x1;
-    private readonly uint _y1;
-    private readonly uint _x2;
-    private readonly uint _y2;
+    private readonly int _x1;
+    private readonly int _y1;
+    private readonly int _x2;
+    private readonly int _y2;
     private readonly Color _color;
     private readonly double _tolerance;
     
 
-    public DrawLineEnumerator(IPixelEnumerable baseEnumerable, uint x1, uint y1, uint x2, uint y2, Color color, double tolerance)
+    public DrawLineEnumerator(IPixelEnumerable baseEnumerable, int x1, int y1, int x2, int y2, Color color, double tolerance)
     {
         _baseEnumerator = (IPixelEnumerator)baseEnumerable.GetEnumerator();
         _x1 = x1;
@@ -87,8 +87,12 @@ public class DrawLineEnumerator : IPixelEnumerator
         get
         {
             var pixel = _baseEnumerator.Current;
-            var slope = ((int)_y2 - (int)_y1) / ((int)_x2 - (int)_x1);
-            return _tolerance >= Math.Abs(slope * pixel.X + _y1 - slope * _x1 - pixel.Y)
+            var slope = (_y2 - _y1) / (_x2 - _x1);
+            return _tolerance >= Math.Abs(slope * pixel.X + _y1 - slope * _x1 - pixel.Y) 
+                   && pixel.X >= _x1 
+                   && pixel.Y >= _y1
+                   && pixel.X <= _x2
+                   && pixel.Y <= _y2
                 ? new Pixel(pixel.X, pixel.Y, pixel.Color.Composite(_color)) 
                 : pixel;
         }
