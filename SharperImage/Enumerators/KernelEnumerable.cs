@@ -31,10 +31,15 @@ public class KernelEnumerable : IPixelEnumerable
     {
         _enumerator = new KernelEnumerator(enumerable, kernelWidth, kernelHeight, kernelOffsetX, kernelOffsetY, kernelFunction, edgeMode);
     }
+
+    public IPixelEnumerator GetPixelEnumerator()
+    {
+        return _enumerator;
+    }
     
     public IEnumerator<Pixel> GetEnumerator()
     {
-        return _enumerator;
+        return GetPixelEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -42,7 +47,7 @@ public class KernelEnumerable : IPixelEnumerable
         return GetEnumerator();
     }
 
-    public int Count => _enumerator.Count;
+    public int Count => (int)_enumerator.Count();
     public uint GetWidth() => _enumerator.GetWidth();
     public uint GetHeight() => _enumerator.GetHeight();
 
@@ -173,7 +178,7 @@ public class KernelEnumerator : IPixelEnumerator
         GC.SuppressFinalize(this);
     }
 
-    public int Count => (int)(_width * _height);
+    public uint Count() => GetWidth() * GetHeight();
     public uint GetWidth() => _width;
     public uint GetHeight() => _height;
 

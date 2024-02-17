@@ -20,7 +20,7 @@
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Syrency.MyLib" Version="1.0.3-alpha" />
+        <PackageReference Include="Syrency.MyLib" Version="1.0.7-alpha" />
         <None Include="../README.md" Pack="true" PackagePath="/"/>
     </ItemGroup>
 

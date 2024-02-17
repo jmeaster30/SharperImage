@@ -12,9 +12,14 @@ public class BlendModeEnumerable : IPixelEnumerable
         _enumerator = new BlendModeEnumerator(enumerableA, enumerableB, blendFunction);
     }
     
-    public IEnumerator<Pixel> GetEnumerator()
+    public IPixelEnumerator GetPixelEnumerator()
     {
         return _enumerator;
+    }
+    
+    public IEnumerator<Pixel> GetEnumerator()
+    {
+        return GetPixelEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -22,7 +27,7 @@ public class BlendModeEnumerable : IPixelEnumerable
         return GetEnumerator();
     }
 
-    public int Count => _enumerator.Count;
+    public int Count => (int)_enumerator.Count();
     public uint GetWidth() => _enumerator.GetWidth();
     public uint GetHeight() => _enumerator.GetHeight();
 
@@ -99,7 +104,7 @@ public class BlendModeEnumerator : IPixelEnumerator
     public void SetX(uint x) => _index2dEnumerator.SetX(x);
     public void SetY(uint y) => _index2dEnumerator.SetY(y);
 
-    public int Count => (int)(_width * _height);
+    public uint Count() => GetWidth() * GetHeight();
     public uint GetWidth() => _width;
     public uint GetHeight() => _height;
 }

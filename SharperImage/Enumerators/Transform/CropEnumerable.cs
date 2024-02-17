@@ -12,9 +12,14 @@ public class CropEnumerable : IPixelEnumerable
         _cropEnumerator = new CropEnumerator(internalEnumerable, newWidth, newHeight);
     }
     
-    public IEnumerator<Pixel> GetEnumerator()
+    public IPixelEnumerator GetPixelEnumerator()
     {
         return _cropEnumerator;
+    }
+    
+    public IEnumerator<Pixel> GetEnumerator()
+    {
+        return GetPixelEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -22,7 +27,7 @@ public class CropEnumerable : IPixelEnumerable
         return GetEnumerator();
     }
 
-    public int Count => _cropEnumerator.Count;
+    public int Count => (int)_cropEnumerator.Count();
 
     public uint GetWidth() => _cropEnumerator.GetWidth();
 
@@ -89,8 +94,8 @@ public class CropEnumerator : IPixelEnumerator
         _internalEnumerator.GetEnumerator().Dispose();
         GC.SuppressFinalize(this);
     }
-
-    public int Count => (int)_newWidth * (int)_newHeight;
+    
+    public uint Count() => _newWidth * _newHeight;
 
     public uint GetWidth() => _newWidth;
     public uint GetHeight() => _newHeight;

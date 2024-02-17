@@ -11,9 +11,14 @@ public class PixelFilterEnumerable : IPixelEnumerable
         _pixelEnumerator = new PixelFilterEnumerator(pixelEnumerable, pixelFilter);
     }
 
-    public IEnumerator<Pixel> GetEnumerator()
+    public IPixelEnumerator GetPixelEnumerator()
     {
         return _pixelEnumerator;
+    }
+    
+    public IEnumerator<Pixel> GetEnumerator()
+    {
+        return GetPixelEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -25,14 +30,14 @@ public class PixelFilterEnumerable : IPixelEnumerable
 
     public uint GetHeight() => _pixelEnumerator.GetHeight();
 
-    public int Count => _pixelEnumerator.Count();
+    public int Count => (int)_pixelEnumerator.Count();
 
     public Pixel this[int index] => _pixelEnumerator[index];
 
     public Pixel this[uint x, uint y] => _pixelEnumerator[x, y];
 }
 
-public class PixelFilterEnumerator : IEnumerator<Pixel>
+public class PixelFilterEnumerator : IPixelEnumerator
 {
     private IPixelEnumerable _internalEnumerator;
     private Func<Pixel, Pixel> _pixelFilter;
@@ -62,11 +67,13 @@ public class PixelFilterEnumerator : IEnumerator<Pixel>
         _internalEnumerator.GetEnumerator().Dispose();
     }
 
+    public uint Count() => _internalEnumerator.GetWidth() * _internalEnumerator.GetHeight();
     public uint GetWidth() => _internalEnumerator.GetWidth();
-    
     public uint GetHeight() => _internalEnumerator.GetHeight();
     
-    public int Count() => _internalEnumerator.Count;
+    public void SetIndex(uint index) => _internalEnumerator.GetPixelEnumerator().SetIndex(index);
+    public void SetX(uint x) => _internalEnumerator.GetPixelEnumerator().SetX(x);
+    public void SetY(uint y) => _internalEnumerator.GetPixelEnumerator().SetY(y);
     
     public Pixel this[int index] => _pixelFilter(_internalEnumerator[index]); 
     

@@ -20,9 +20,14 @@ public class ScaleEnumerable : IPixelEnumerable
         _enumerator = new ScaleEnumerator(enumerable, newWidth, newHeight, mode);
     }
     
-    public IEnumerator<Pixel> GetEnumerator()
+    public IPixelEnumerator GetPixelEnumerator()
     {
         return _enumerator;
+    }
+    
+    public IEnumerator<Pixel> GetEnumerator()
+    {
+        return GetPixelEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -30,7 +35,7 @@ public class ScaleEnumerable : IPixelEnumerable
         return GetEnumerator();
     }
 
-    public int Count => _enumerator.Count;
+    public int Count => (int)_enumerator.Count();
     public uint GetWidth() => _enumerator.GetWidth();
     public uint GetHeight() => _enumerator.GetHeight();
     
@@ -120,7 +125,7 @@ public class ScaleEnumerator : IPixelEnumerator
         GC.SuppressFinalize(this);
     }
 
-    public int Count => (int)_newWidth * (int)_newHeight;
+    public uint Count() => GetWidth() * GetHeight();
 
     public uint GetWidth() => _newWidth;
     public uint GetHeight() => _newHeight;

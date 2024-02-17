@@ -15,10 +15,15 @@ public class ImageDataEnumerable : IPixelEnumerable
         _width = image.Width;
         _height = image.Height;
     }
+
+    public IPixelEnumerator GetPixelEnumerator()
+    {
+        return _imageDataEnumerator;
+    }
     
     public IEnumerator<Pixel> GetEnumerator()
     {
-        return _imageDataEnumerator;
+        return GetPixelEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
@@ -82,6 +87,8 @@ public class ImageDataEnumerator : IPixelEnumerator
         GC.SuppressFinalize(this);
     }
 
+    public uint Count() => GetWidth() * GetHeight();
+    
     public uint GetWidth() => _image.Width;
     public uint GetHeight() => _image.Height;
 

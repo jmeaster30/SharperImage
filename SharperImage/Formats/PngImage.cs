@@ -1,4 +1,5 @@
 using System.Text;
+using MyLib.Compression;
 using MyLib.Enumerables;
 using MyLib.Streams;
 using Newtonsoft.Json;
@@ -9,6 +10,26 @@ namespace SharperImage.Formats;
 
 public class PngImage : IFormat
 {
+    private static bool IsCritical(string type)
+    {
+        return char.IsUpper(type[0]);
+    }
+    
+    private static bool IsPublic(string type)
+    {
+        return char.IsUpper(type[1]);
+    }
+    
+    private static bool IsReserved(string type)
+    {
+        return char.IsUpper(type[0]);
+    }
+    
+    private static bool IsSafeToCopy(string type)
+    {
+        return char.IsLower(type[0]);
+    }
+    
     public Image Decode(Stream stream)
     {
         var signature = stream.ReadBytes(8);
@@ -60,8 +81,14 @@ public class PngImage : IFormat
         var width = imageHeader.Width;
         var height = imageHeader.Height;
 
-        Console.WriteLine(JsonConvert.SerializeObject(imageHeader));
-        Console.WriteLine(JsonConvert.SerializeObject(chunks));
+        var data = chunks.Where(x => x.Is<ImageData>()).SelectMany(x => ((ImageData)x).Data);
+        var uncompressedData = new Zlib().Decode(data).ToList();
+
+        foreach (var x in uncompressedData.GetRange(0, 4))
+        {
+            Console.WriteLine(x);
+        }
+        
         return new Image(width, height);
     }
     
@@ -78,9 +105,11 @@ public class PngImage : IFormat
         {
             var chunkLength = stream.ReadU32();
             var type = Encoding.UTF8.GetString(stream.ReadBytes(4));
-            Console.WriteLine(type);
             var data = stream.ReadBytes((int)chunkLength);
             var crc = stream.ReadU32();
+            
+            // TODO check CRC
+            
             return type switch
             {
                 "IHDR" => new ImageHeader
@@ -107,13 +136,47 @@ public class PngImage : IFormat
                     Value = data[..4].ToU32(),
                 },
                 "sBIT" => SignificantBits.Load(chunkLength, type, data, crc, imageHeader),
-                _ => new Unknown
+                "cHRM" => Chrm.Load(chunkLength, type, data, crc),
+                "bKGD" => BackgroundColor.Load(chunkLength, type, data, crc, imageHeader),
+                "pHYs" => new PhysicalPixelDimensions
                 {
                     Length = chunkLength,
                     Type = type,
                     Data = data,
                     Crc = crc,
-                }
+                    PixelsPerUnitX = data[..4].ToU32(),
+                    PixelsPerUnitY = data[4..8].ToU32(),
+                    UnitSpecifier = data[8]
+                },
+                "tIME" => new ImageLastModificationTime
+                {
+                    Length = chunkLength,
+                    Type = type,
+                    Data = data,
+                    Crc = crc,
+                    Year = data[..2].ToU16(),
+                    Month = data[2],
+                    Day = data[3],
+                    Hour = data[4],
+                    Minute = data[5],
+                    Second = data[6]
+                },
+                "IDAT" => new ImageData 
+                {
+                    Length = chunkLength,
+                    Type = type,
+                    Data = data,
+                    Crc = crc,
+                },
+                "tEXt" => TextualData.Load(chunkLength, type, data, crc),
+                "IEND" => new End
+                {
+                    Length = chunkLength,
+                    Type = type,
+                    Data = data,
+                    Crc = crc
+                },
+                _ => Unknown.Load(chunkLength, type, data, crc),
             };
         }
     }
@@ -252,11 +315,190 @@ public class PngImage : IFormat
         }
     }
 
+    private class Chrm : Chunk
+    {
+        // all of these are scaled by 100,000
+        public uint WhitePointX { get; set; }
+        public uint WhitePointY { get; set; }
+        public uint RedX { get; set; }
+        public uint RedY { get; set; }
+        public uint GreenX { get; set; }
+        public uint GreenY { get; set; }
+        public uint BlueX { get; set; }
+        public uint BlueY { get; set; }
+
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(Chrm);
+        }
+
+        public static Chrm Load(uint length, string type, byte[] data, uint crc)
+        {
+            if (length != 32)
+                throw new ImageDecodeException("Data length for cHRM chunk was not 32 bytes");
+            
+            return new Chrm
+            {
+                Length = length,
+                Type = type,
+                Data = data,
+                Crc = crc,
+                WhitePointX = data[..4].ToU32(),
+                WhitePointY = data[4..8].ToU32(),
+                RedX = data[8..12].ToU32(),
+                RedY = data[12..16].ToU32(),
+                GreenX = data[16..20].ToU32(),
+                GreenY = data[20..24].ToU32(),
+                BlueX = data[24..28].ToU32(),
+                BlueY = data[28..32].ToU32(),
+            };
+        }
+    }
+
+    private class BackgroundColor : Chunk
+    {
+        public byte PaletteIndex { get; set; }
+        public ushort Gray { get; set; }
+        public ushort Red { get; set; }
+        public ushort Green { get; set; }
+        public ushort Blue { get; set; }
+
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(BackgroundColor);
+        }
+        
+        public static BackgroundColor Load(uint length, string type, byte[] data, uint crc, ImageHeader? header)
+        {
+            if (header == null)
+            {
+                throw new ImageDecodeException(
+                    "Found a bKGD chunk without having an IHDR chunk. The structure of the bKGD chunk is defined with the color type of the IHDR chunk");
+            }
+
+            return header.ColorType switch
+            {
+                3 =>
+                    new BackgroundColor
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        PaletteIndex = data[0]
+                    },
+                0 or 4 => new BackgroundColor
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        Gray = data[..2].ToU16(),
+                    },
+                2 or 6 => new BackgroundColor
+                    {
+                        Length = length,
+                        Type = type,
+                        Data = data,
+                        Crc = crc,
+                        Red = data[..2].ToU16(),
+                        Green = data[2..4].ToU16(),
+                        Blue = data[4..6].ToU16()
+                    },
+                _ => throw new ImageDecodeException("Unexpected color type for the bKGD header")
+            };
+        }
+    }
+
+    private class PhysicalPixelDimensions : Chunk
+    {
+        public uint PixelsPerUnitX { get; set; }
+        public uint PixelsPerUnitY { get; set; }
+        public byte UnitSpecifier { get; set; }
+
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(PhysicalPixelDimensions);
+        }
+    }
+
+    private class ImageLastModificationTime : Chunk
+    {
+        public ushort Year { get; set; }
+        public byte Month { get; set; }
+        public byte Day { get; set; }
+        public byte Hour { get; set; }
+        public byte Minute { get; set; }
+        public byte Second { get; set; }
+
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(ImageLastModificationTime);
+        }
+    }
+
+    private class TextualData : Chunk
+    {
+        public string Keyword { get; set; }
+        public string Text { get; set; }
+
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(TextualData);
+        }
+
+        public static TextualData Load(uint length, string type, byte[] data, uint crc)
+        {
+            var textualData = new TextualData
+            {
+                Length = length,
+                Type = type,
+                Data = data,
+                Crc = crc
+            };
+
+            var inKeyword = true;
+            foreach (var d in data)
+            {
+                if (inKeyword && d == 0)
+                    inKeyword = false;
+                else if (inKeyword)
+                    textualData.Keyword += Encoding.UTF8.GetString(new [] { d });
+                else
+                    textualData.Text += Encoding.UTF8.GetString(new [] { d });
+            }
+
+            return textualData;
+        }
+    }
+
+    private class End : Chunk
+    {
+        public override bool Is<T>()
+        {
+            return typeof(T) == typeof(End);
+        }
+    }
+
     private class Unknown : Chunk
     {
         public override bool Is<T>()
         {
             return typeof(T) == typeof(Unknown);
+        }
+
+        public static Unknown Load(uint length, string type, byte[] data, uint crc)
+        {
+            if (IsCritical(type))
+                throw new ImageDecodeException("Cannot safely interpret file. Found critical chunk with unknown type.");
+            
+            return new Unknown
+            {
+                Length = length,
+                Type = type,
+                Data = data,
+                Crc = crc
+            };
         }
     }
     
@@ -264,7 +506,5 @@ public class PngImage : IFormat
     {
         throw new NotImplementedException();
     }
-    
-    
 }
 

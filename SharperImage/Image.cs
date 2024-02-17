@@ -33,4 +33,18 @@ public class Image
         var formatter = format.GetFormatter();
         return formatter.Decode(imageFile);
     }
+
+    public static Image Create(uint width, uint height, Color color)
+    {
+        var image = new Image(width, height);
+        for (uint x = 0; x < width; x++)
+        {
+            for (uint y = 0; y < height; y++)
+            {
+                image.PixelData[x, y] = new Pixel(x, y, color);
+            }
+        }
+
+        return image;
+    }
 }
