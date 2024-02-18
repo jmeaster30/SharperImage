@@ -9,60 +9,39 @@ public static class KuwaharaFilter
     {
         var colormean = colors.Aggregate(Color.CLEAR, (current, c) => current + c / colors.Count);
         
-        var lumas = colors.Select(x => x.Grayscale().Red);
+        var lumas = colors.Select(x => x.Luma());
         var lumamean = lumas.Sum() / colors.Count;
         var standardDeviation = System.Math.Sqrt(lumas.Aggregate(0.0, (current, x) => current + (x - lumamean) * (x - lumamean)) / lumas.Count());
 
         return (colormean, standardDeviation);
     }
 
+    private static List<Color> Quadrant(Pixel[,] data, uint fromX, uint toX, uint fromY, uint toY)
+    {
+        // TODO it would be cool to have a GetRange type function for 2d arrays
+        var result = new List<Color>();
+        for (var x = fromX; x < toX; x++)
+        {
+            for (var y = fromY; y < toY; y++)
+            {
+                result.Add(data[x, y].Color);
+            }
+        }
+
+        return result;
+    }
+
     private static List<List<Color>> Quadrants(Pixel[,] data, uint windowSize)
     {
-        // TODO this feels crappy. I definitely want to add a GetRange type extension but for 2d arrays
         var results = new List<List<Color>>();
 
-        var quadrantSize = (windowSize / 2.0).Ceiling();
+        var quadrantSize = (uint)(windowSize / 2.0).Ceiling();
         
-        var q1 = new List<Color>();
-        for (var x = 0; x < quadrantSize; x++)
-        {
-            for (var y = 0; y < quadrantSize; y++)
-            {
-                q1.Add(data[x, y].Color);
-            }
-        }
-        results.Add(q1);
-        
-        var q2 = new List<Color>();
-        for (var x = quadrantSize - 1; x < windowSize; x++)
-        {
-            for (var y = 0; y < quadrantSize; y++)
-            {
-                q2.Add(data[x, y].Color);
-            }
-        }
-        results.Add(q2);
-        
-        var q3 = new List<Color>();
-        for (var x = 0; x < quadrantSize; x++)
-        {
-            for (var y = quadrantSize - 1; y < windowSize; y++)
-            {
-                q3.Add(data[x, y].Color);
-            }
-        }
-        results.Add(q3);
-        
-        var q4 = new List<Color>();
-        for (var x = quadrantSize - 1; x < windowSize; x++)
-        {
-            for (var y = quadrantSize - 1; y < windowSize; y++)
-            {
-                q4.Add(data[x, y].Color);
-            }
-        }
-        results.Add(q4);
-        
+        results.Add(Quadrant(data, 0, quadrantSize, 0, quadrantSize));
+        results.Add(Quadrant(data, quadrantSize - 1, windowSize, 0, quadrantSize));
+        results.Add(Quadrant(data, 0, quadrantSize, quadrantSize - 1, windowSize));
+        results.Add(Quadrant(data, quadrantSize - 1, windowSize, quadrantSize - 1, windowSize));
+
         return results;
     } 
     

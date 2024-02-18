@@ -1,3 +1,5 @@
+using MyLib.Enumerables;
+using MyLib.Math;
 using SharperImage.Enumerators.Transform;
 
 namespace SharperImage.Enumerators;
@@ -43,15 +45,38 @@ public static class ImageExtensions
     {
         return a.Item1.Blend(a.Item2, blendFunction);
     }
-    
-    public static Image ToImage(this IPixelEnumerable pixelEnumerable)
+
+    public static Image ToImage(this IPixelEnumerable pixelEnumerable, bool showProgress = false, int barLength = 25)
     {
         var image = new Image(pixelEnumerable.GetWidth(), pixelEnumerable.GetHeight());
-        
-        foreach (var pixel in pixelEnumerable)
+
+        for (uint y = 0; y < pixelEnumerable.GetHeight(); y++)
         {
-            image.SetPixel(pixel.X, pixel.Y, pixel);
+            if (showProgress)
+                Console.Write(
+                    $"Row: {(y + 1).ToString().PadLeft(pixelEnumerable.GetHeight().ToString().Length)} / {pixelEnumerable.GetHeight()} [");
+            var baseCursorPos = Console.CursorLeft;
+            double rowPercent = 0;
+            for (uint x = 0; x < pixelEnumerable.GetWidth(); x++)
+            {
+                rowPercent = (double)x / pixelEnumerable.GetWidth();
+                if (showProgress)
+                {
+                    var rowPercentNum = (rowPercent * barLength).Round();
+                    Console.Write($"{'@'.Repeat(rowPercentNum).Join("")}{'-'.Repeat(barLength - rowPercentNum).Join("")}]");
+                }
+
+                image.SetPixel(x, y, pixelEnumerable[x, y]);
+                if (showProgress)
+                    Console.CursorLeft = baseCursorPos;
+            }
+
+            if (showProgress)
+                Console.CursorLeft = 0;
         }
+
+        if (showProgress)
+            Console.WriteLine();
 
         return image;
     }

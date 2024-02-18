@@ -57,6 +57,12 @@ public struct Color
         return (xmax + xmin) / 2.0;
     }
 
+    public double Luma()
+    {
+        // Rec 709
+        return 0.2126 * Red + 0.7152 * Green + 0.0722 * Blue;
+    }
+
     public byte[] Cmyk()
     {
         var rPrime = Red;
