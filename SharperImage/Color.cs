@@ -1,3 +1,5 @@
+using MyLib.Math;
+
 namespace SharperImage;
 
 public struct Color
@@ -29,8 +31,8 @@ public struct Color
     }
 
     public double Hue() {
-        var xmax = Math.Max(Math.Max(Red, Green), Blue);
-        var xmin = Math.Min(Math.Min(Red, Green), Blue);
+        var xmax = Red.Max(Green).Max(Blue);
+        var xmin = Red.Min(Green).Min(Blue);
         var chroma = xmax - xmin;
         if (chroma == 0) return 0;
         if (xmax == Red) return 60 * ((Green - Blue) / chroma % 6);
@@ -42,16 +44,16 @@ public struct Color
     public double Saturation()
     {
         if (Luminosity() is 0 or 1) return 0;
-        var xmax = Math.Max(Math.Max(Red, Green), Blue);
-        var xmin = Math.Min(Math.Min(Red, Green), Blue);
+        var xmax = Red.Max(Green).Max(Blue);
+        var xmin = Red.Min(Green).Min(Blue);
         var chroma = xmax - xmin;
-        return chroma / (1 - Math.Abs(2 * xmax - chroma - 1));
+        return chroma / (1 - System.Math.Abs(2 * xmax - chroma - 1));
     }
     
     public double Luminosity()
     {
-        var xmax = Math.Max(Math.Max(Red, Green), Blue);
-        var xmin = Math.Min(Math.Min(Red, Green), Blue);
+        var xmax = Red.Max(Green).Max(Blue);
+        var xmin = Red.Min(Green).Min(Blue);
         return (xmax + xmin) / 2.0;
     }
 
@@ -60,7 +62,7 @@ public struct Color
         var rPrime = Red;
         var gPrime = Green;
         var bPrime = Blue;
-        var k = 1 - Math.Max(rPrime, Math.Max(gPrime, bPrime));
+        var k = 1 - rPrime.Max(gPrime).Max(bPrime);
         var c = (1 - rPrime - k) / (1 - k);
         var m = (1 - gPrime - k) / (1 - k);
         var y = (1 - bPrime - k) / (1 - k);
@@ -73,9 +75,9 @@ public struct Color
 
     public static Color HSLA(double hue, double saturation, double luminosity, double alpha)
     {
-        var chroma = (1 - Math.Abs(2 * luminosity - 1)) * saturation;
+        var chroma = (1 - System.Math.Abs(2 * luminosity - 1)) * saturation;
         var hprime = hue % 360 / 60;
-        var x = chroma * (1 - Math.Abs(hprime % 2 - 1));
+        var x = chroma * (1 - System.Math.Abs(hprime % 2 - 1));
         var (r1, g1, b1) = hprime switch
         {
             >= 0 and < 1 => (chroma, x, 0.0),
@@ -127,7 +129,7 @@ public struct Color
 
     public double Distance(Color other)
     {
-        return Math.Sqrt(DistanceSquared(other));
+        return System.Math.Sqrt(DistanceSquared(other));
     }
     
     public double DistanceSquared(Color other)
@@ -220,9 +222,9 @@ public struct Color
 
     public Color ColorDodge(Color other) => Combine(other, (a, b) => a / (1 - b));
 
-    public Color Darken(Color other) => Combine(other, (a, b) => Math.Min(a, b));
+    public Color Darken(Color other) => Combine(other, (a, b) => a.Min(b));
     
-    public Color Difference(Color other) => Combine(other, (a, b) => Math.Abs(a - b));
+    public Color Difference(Color other) => Combine(other, (a, b) => System.Math.Abs(a - b));
 
     public Color Dissolve(Color other)
     {
@@ -238,7 +240,7 @@ public struct Color
     
     public Color Hue(Color other) => HSLA(other.Hue(), Saturation(), Luminosity(), Alpha);
     
-    public Color Lighten(Color other) => Combine(other, (a, b) => Math.Max(a, b));
+    public Color Lighten(Color other) => Combine(other, (a, b) => a.Max(b));
 
     public Color LinearBurn(Color other) => Combine(other, (a, b) => 1 - (1 - a + (1 - b)));
     
@@ -264,7 +266,7 @@ public struct Color
     public Color Screen(Color other) => Combine(other, (a, b) => 1 - (1 - a) * (1 - b));
 
     public Color SoftLight(Color other) => Combine(other,
-        (a, b) => b < 0.5 ? 2 * a * b + a * a * (1 - 2 * b) : Math.Sqrt(a) * (2 * b - 1) + 2 * a * (1 - b));
+        (a, b) => b < 0.5 ? 2 * a * b + a * a * (1 - 2 * b) : System.Math.Sqrt(a) * (2 * b - 1) + 2 * a * (1 - b));
 
     public Color Subtract(Color other) => Combine(other, (a, b) => a - b);
     

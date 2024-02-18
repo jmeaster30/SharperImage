@@ -26,6 +26,11 @@ public static class ImageExtensions
         return new PixelFilterEnumerable(enumerable, pixelFilter);
     }
 
+    public static IPixelEnumerable Kernel(this IPixelEnumerable enumerable, uint kernelWidth, uint kernelHeight,
+        Func<Pixel[,], Color> kernelFunction, KernelEdgeMode edgeMode = KernelEdgeMode.EXTEND)
+    {
+        return new KernelEnumerable(enumerable, kernelWidth, kernelHeight, kernelFunction, edgeMode);
+    }
 
     public static IPixelEnumerable Blend(this IPixelEnumerable a, IPixelEnumerable b,
         Func<Color, Color, Color> blendFunction)

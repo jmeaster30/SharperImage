@@ -4,6 +4,7 @@ using SharperImage;
 using SharperImage.Enumerators;
 using SharperImage.Enumerators.Drawing;
 using SharperImage.Filters.Artsy;
+using SharperImage.Filters.Smoothing;
 using SharperImage.Formats;
 using SharperImage.Viewer;
 
@@ -21,6 +22,7 @@ Console.WriteLine($"Decoded image in {loadWatchElapsedMs / 1000.0} sec");
 var renderWatch = System.Diagnostics.Stopwatch.StartNew();
 
 var enumerable = diceImage
+    .Kuwahara(21)
     .PixelSort(color => color.Distance(Color.RED) < 0.75,
         (a, b) => a.Red.CompareTo(b.Red),
         PixelSortDirection.VERTICAL);
