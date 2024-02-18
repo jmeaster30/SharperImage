@@ -85,8 +85,8 @@ public class BlendModeEnumerator : IPixelEnumerator
         get
         {
             var (x, y) = _index2dEnumerator.Current;
-            var a = x < _a.GetWidth() && y < _a.GetHeight() ? _a[x, y].Color : Color.Clear;
-            var b = x < _b.GetWidth() && y < _b.GetHeight() ? _b[x, y].Color : Color.Clear;
+            var a = x < _a.GetWidth() && y < _a.GetHeight() ? _a[x, y].Color : Color.CLEAR;
+            var b = x < _b.GetWidth() && y < _b.GetHeight() ? _b[x, y].Color : Color.CLEAR;
             return new Pixel(x, y, _blendFunction(a, b));
         }
     }

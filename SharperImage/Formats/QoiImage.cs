@@ -23,7 +23,7 @@ public class QoiImage : IFormat
         var pixels = image.ToPixelEnumerable();
         // pixel map specified by qoi spec
         var pixelHashMap = new Pixel[64];
-        var lastPixel = new Pixel(0, 0, Color.Clear);
+        var lastPixel = new Pixel(0, 0, Color.CLEAR);
         var run = 0;
 
         foreach (var pixel in pixels)
@@ -156,12 +156,12 @@ public class QoiImage : IFormat
         var fileOffset = 14;
         var fileLength = stream.Length - 8; //chop off last 8 bytes
 
-        var defaultPixelColor = Color.Clear;
+        var defaultPixelColor = Color.CLEAR;
 
         while (fileOffset < fileLength)
         {
             var tag = stream.ReadBytesAt(fileOffset, 1)[0];
-            var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, Color.Black));
+            var lastPixel = pixels.LastOrDefault(new Pixel(0, 0, Color.BLACK));
             if (tag == 254) // QOI_OP_RGB
             {
                 var r = stream.ReadBytesAt(fileOffset + 1, 1)[0];

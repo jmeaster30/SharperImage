@@ -83,7 +83,7 @@ public class CropEnumerator : IPixelEnumerator
             var (x, y) = _index2dEnumerator.Current;
             return x < _internalEnumerator.GetWidth() && y < _internalEnumerator.GetHeight()
                 ? _internalEnumerator[x, y]
-                : new Pixel(x, y, Color.Clear);
+                : new Pixel(x, y, Color.CLEAR);
         }
     }
 

@@ -107,9 +107,46 @@ public struct Color
     public static Color operator *(Color lhs, double rhs) =>
         new(lhs.Red * rhs, lhs.Green * rhs, lhs.Blue * rhs, lhs.Alpha * rhs);
     
-    public static Color Clear = new(0, 0, 0, 0);
-    public static Color Black = new(0, 0, 0, 1.0);
-    public static Color White = new(1.0, 1.0, 1.0, 1.0);
+    public static Color CLEAR = new(0, 0, 0, 0);
+    public static Color BLACK = new(0, 0, 0, 255);
+    public static Color RED = new(255, 0, 0, 255);
+    public static Color GREEN = new(78, 154, 6, 255);
+    public static Color YELLOW = new(196, 160, 0, 255);
+    public static Color BLUE = new(114, 159, 207, 255);
+    public static Color MAGENTA = new(117, 80, 123, 255);
+    public static Color CYAN = new(6, 152, 154, 255);
+    public static Color WHITE = new(211, 215, 207, 255);
+    public static Color BRIGHT_BLACK = new(85, 87, 83, 255);
+    public static Color BRIGHT_RED = new(239, 41, 41, 255);
+    public static Color BRIGHT_GREEN = new(138, 226, 52, 255);
+    public static Color BRIGHT_YELLOW = new(252, 233, 79, 255);
+    public static Color BRIGHT_BLUE = new(50, 175, 255, 255);
+    public static Color BRIGHT_MAGENTA = new(173, 127, 168, 255);
+    public static Color BRIGHT_CYAN = new(52, 226, 226, 255);
+    public static Color BRIGHT_WHITE = new(255, 255, 255, 255);
+
+    public double Distance(Color other)
+    {
+        return Math.Sqrt(DistanceSquared(other));
+    }
+    
+    public double DistanceSquared(Color other)
+    {
+        var dr = Red - other.Red;
+        var dg = Green - other.Green;
+        var db = Blue - other.Blue;
+        var da = Alpha - other.Alpha;
+        return dr * dr + dg * dg + db * db + da * da;
+    }
+    
+    public static Color Interpolate(Color from, Color to, double percent)
+    {
+        var dr = from.Red - to.Red;
+        var dg = from.Green - to.Green;
+        var db = from.Blue - to.Blue;
+        var da = from.Alpha - to.Alpha;
+        return new Color(from.Red + dr * percent, from.Green + dg * percent, from.Blue + db * percent, from.Alpha + da * percent);
+    }
 
     public Color Grayscale()
     {

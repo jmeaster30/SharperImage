@@ -1,6 +1,6 @@
 using SharperImage.Enumerators;
 
-namespace SharperImage.Filters.Colors;
+namespace SharperImage.Filters.Adjustments;
 
 public static class InvertFilter
 {

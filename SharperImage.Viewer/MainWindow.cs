@@ -3,7 +3,7 @@ using Cairo;
 using Gdk;
 using Gtk;
 using SharperImage.Enumerators;
-using SharperImage.Filters.Colors;
+using SharperImage.Filters.Adjustments;
 using SharperImage.Formats;
 using Application = Gtk.Application;
 using EventMotion = Gdk.EventMotion;
@@ -78,6 +78,10 @@ namespace SharperImage.Viewer
             grayscaleOption.Toggled += GrayscaleOnToggle;
             var invertOption = new CheckButton("Invert");
             invertOption.Toggled += InvertOnToggle;
+
+            var zoomSlider = new Adjustment(100, 0, 1000, 1, 15, 15);
+            var zoomScale = new Scale(Orientation.Horizontal, zoomSlider);
+            zoomSlider.ValueChanged += ZoomSliderChangeValue;
             
             var redSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var redScale = new Scale(Orientation.Horizontal, redSlider);
@@ -91,6 +95,7 @@ namespace SharperImage.Viewer
             var alphaSlider = new Adjustment(0, 0, 255, 1, 15, 15);
             var alphaScale = new Scale(Orientation.Horizontal, alphaSlider);
             alphaSlider.ValueChanged += AlphaScaleOnChangeValue;
+            backgroundSliders.Add(zoomScale);
             backgroundSliders.Add(grayscaleOption);
             backgroundSliders.Add(invertOption);
             backgroundSliders.Add(redScale);
@@ -128,6 +133,11 @@ namespace SharperImage.Viewer
             _myImageArea.SetBackground(null, null, null, (byte)((Adjustment)o).Value);
         }
         
+        private void ZoomSliderChangeValue(object o, EventArgs args)
+        {
+            _myImageArea.SetZoom(((Adjustment)o).Value);
+        }
+        
         private void GrayscaleOnToggle(object o, EventArgs args)
         {
             _myImageArea.ToggleGrayscale();
@@ -142,11 +152,12 @@ namespace SharperImage.Viewer
         {
             private readonly Image _image;
 
-            public Color BackgroundColor = Color.Clear;
+            public Color BackgroundColor = Color.CLEAR;
 
             public Action<EventMotion> MouseMoveAction { get; set; }
             private bool UseGrayscale { get; set; }
             private bool UseInvert { get; set; }
+            private double Zoom { get; set; } = 100;
 
             public ImageArea(Image image)
             {
@@ -168,6 +179,12 @@ namespace SharperImage.Viewer
                 QueueDraw();
             }
 
+            public void SetZoom(double zoomLevel)
+            {
+                Zoom = zoomLevel;
+                QueueDraw();
+            }
+
             public void ToggleGrayscale()
             {
                 UseGrayscale = !UseGrayscale;
@@ -186,12 +203,14 @@ namespace SharperImage.Viewer
                 var pixels = _image.ToPixelEnumerable()
                     .ConditionalApply(UseGrayscale, e => e.Grayscale())
                     .ConditionalApply(UseInvert, e => e.Invert());
-                    
+
+                var scale = Zoom / 100;
+                
                 foreach (var pixel in pixels)
                 {
                     var composite = BackgroundColor.Composite(pixel.Color);
                     c.SetSourceRGBA(composite.Red, composite.Green, composite.Blue, composite.Alpha);
-                    c.Rectangle(pixel.X, pixel.Y, 1, 1);
+                    c.Rectangle(pixel.X * scale, pixel.Y * scale, scale, scale);
                     c.Fill();
                 }
                 return true;

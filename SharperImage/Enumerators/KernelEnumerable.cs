@@ -139,8 +139,8 @@ public class KernelEnumerator : IPixelEnumerator
                         KernelEdgeMode.SHRINK => _enumerable[(uint)adjKx, (uint)adjKy],
                         KernelEdgeMode.WRAP => _enumerable[(uint)((adjKx + _enumerable.GetWidth()) % _enumerable.GetWidth()), (uint)((adjKy + _enumerable.GetHeight()) % _enumerable.GetHeight())],
                         KernelEdgeMode.EXTEND => _enumerable[Clamp(adjKx, _enumerable.GetWidth() - 1), Clamp(adjKy, _enumerable.GetHeight() - 1)],
-                        KernelEdgeMode.BLACK => GetColorPixel(adjKx, adjKy, Color.Black),
-                        KernelEdgeMode.CLEAR => GetColorPixel(adjKx, adjKy, Color.Clear),
+                        KernelEdgeMode.BLACK => GetColorPixel(adjKx, adjKy, Color.BLACK),
+                        KernelEdgeMode.CLEAR => GetColorPixel(adjKx, adjKy, Color.CLEAR),
                         _ => throw new ArgumentOutOfRangeException()
                     };
                 }

@@ -3,12 +3,13 @@
 using SharperImage;
 using SharperImage.Enumerators;
 using SharperImage.Enumerators.Drawing;
+using SharperImage.Filters.Artsy;
 using SharperImage.Formats;
 using SharperImage.Viewer;
 
 var loadWatch = System.Diagnostics.Stopwatch.StartNew();
 
-using var imageFile1 = File.OpenRead("images/qoi/dice.qoi");
+using var imageFile1 = File.OpenRead("images/qoi/kodim23.qoi");
 //using var imageFile2 = File.OpenRead("images/png/PNG_Test.png");
 var diceImage = FileFormat.QOI.GetFormatter().Decode(imageFile1).ToPixelEnumerable();
 //var image = FileFormat.PNG.GetFormatter().Decode(imageFile2).ToPixelEnumerable();
@@ -20,12 +21,9 @@ Console.WriteLine($"Decoded image in {loadWatchElapsedMs / 1000.0} sec");
 var renderWatch = System.Diagnostics.Stopwatch.StartNew();
 
 var enumerable = diceImage
-    .DrawRectangle(200, 200, 100, 100, new Color(1.0, 1.0, 1.0, 0.5));
-
-for (double a = 0; a < Math.PI / 2; a += 0.1)
-{
-    enumerable = enumerable.DrawLine(100, 100, 200, a, Color.White, 1);
-}
+    .PixelSort(color => color.Distance(Color.RED) < 0.75,
+        (a, b) => a.Red.CompareTo(b.Red),
+        PixelSortDirection.VERTICAL);
     
 var result = enumerable.ToImage();
 

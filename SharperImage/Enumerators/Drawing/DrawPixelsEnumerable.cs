@@ -2,13 +2,18 @@ using System.Collections;
 
 namespace SharperImage.Enumerators.Drawing;
 
-public class DrawPixelEnumerable : IPixelEnumerable
+public class DrawPixelsEnumerable : IPixelEnumerable
 {
     private DrawPixelEnumerator _drawPixelEnumerator;
 
-    public DrawPixelEnumerable(IPixelEnumerable baseEnumerable, Pixel drawnPixel)
+    public DrawPixelsEnumerable(IPixelEnumerable baseEnumerable, Pixel drawnPixel)
     {
-        _drawPixelEnumerator = new DrawPixelEnumerator(baseEnumerable, drawnPixel);
+        _drawPixelEnumerator = new DrawPixelEnumerator(baseEnumerable, new Dictionary<(uint, uint), Pixel> { { (drawnPixel.X, drawnPixel.Y), drawnPixel}});
+    }
+    
+    public DrawPixelsEnumerable(IPixelEnumerable baseEnumerable, IEnumerable<Pixel> drawnPixel)
+    {
+        _drawPixelEnumerator = new DrawPixelEnumerator(baseEnumerable, drawnPixel.ToDictionary(pixel => (pixel.X, pixel.Y), pixel => pixel));
     }
     
     public IPixelEnumerator GetPixelEnumerator()
@@ -53,9 +58,9 @@ public class DrawPixelEnumerable : IPixelEnumerable
 public class DrawPixelEnumerator : IPixelEnumerator
 {
     private readonly IPixelEnumerator _baseEnumerator;
-    private readonly Pixel _drawnPixel;
+    private readonly Dictionary<(uint, uint), Pixel> _drawnPixel;
 
-    public DrawPixelEnumerator(IPixelEnumerable baseEnumerable, Pixel drawnPixel)
+    public DrawPixelEnumerator(IPixelEnumerable baseEnumerable, Dictionary<(uint, uint), Pixel> drawnPixel)
     {
         _baseEnumerator = (IPixelEnumerator)baseEnumerable.GetEnumerator();
         _drawnPixel = drawnPixel;
@@ -76,9 +81,10 @@ public class DrawPixelEnumerator : IPixelEnumerator
         get
         {
             var pixel = _baseEnumerator.Current;
-            return pixel.X == _drawnPixel.X && pixel.Y == _drawnPixel.Y 
-                ? new Pixel(_drawnPixel.X, _drawnPixel.Y, pixel.Color.Composite(_drawnPixel.Color))
-                : pixel;
+            if (!_drawnPixel.ContainsKey((pixel.X, pixel.Y))) return pixel;
+            
+            var replacementPixel = _drawnPixel[(pixel.X, pixel.Y)];
+            return new Pixel(replacementPixel.X, replacementPixel.Y, pixel.Color.Composite(replacementPixel.Color));
         }
     }
 

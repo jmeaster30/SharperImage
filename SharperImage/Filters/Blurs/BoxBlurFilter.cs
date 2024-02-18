@@ -8,7 +8,7 @@ public static class BoxBlurFilter
     {
         return new KernelEnumerable(pixelEnumerable, blurWidth, blurHeight, kernel =>
         {
-            var sum = kernel.Cast<Pixel>().Aggregate(Color.Clear, (current, pix) => current + pix.Color);
+            var sum = kernel.Cast<Pixel>().Aggregate(Color.CLEAR, (current, pix) => current + pix.Color);
             return sum / kernel.Length;
         }, edgeMode);
     }
