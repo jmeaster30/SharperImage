@@ -25,7 +25,8 @@ var renderWatch = System.Diagnostics.Stopwatch.StartNew();
 var enumerable = diceImage
     .Scale(diceImage.GetWidth() / 2, diceImage.GetHeight() / 2)
     .Kuwahara(31)
-    .PixelSort(color => color.Luma() < 0.75,
+    .Cache()
+    .PixelSort(color => color.Luma() < 0.6,
         (a, b) => a.Luma().CompareTo(b.Luma()),
         PixelSortDirection.VERTICAL);
     

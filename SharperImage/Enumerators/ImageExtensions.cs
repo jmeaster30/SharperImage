@@ -1,6 +1,6 @@
 using MyLib.Enumerables;
 using MyLib.Math;
-using SharperImage.Enumerators.Transform;
+using SharperImage.Enumerators.Utility;
 
 namespace SharperImage.Enumerators;
 
@@ -9,6 +9,11 @@ public static class ImageExtensions
     public static ImageDataEnumerable ToPixelEnumerable(this Image image)
     {
         return new ImageDataEnumerable(image);
+    }
+
+    public static IPixelEnumerable Cache(this IPixelEnumerable enumerable)
+    {
+        return new CachedPixelEnumerable(enumerable);
     }
 
     public static IPixelEnumerable ConditionalApply(this IPixelEnumerable enumerable, bool condition,
